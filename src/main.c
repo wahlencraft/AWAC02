@@ -7,121 +7,197 @@
 #include "time.h"
 #include "io.h"
 
-int main() {
+#include <avr/io.h>
+#include <stdio.h>
+
+#define TW_START           0x08
+#define TW_REPEATED_START  0x10
+#define TW_MT_SLA_ACK      0x18
+#define TW_MT_DATA_ACK     0x28
+#define TW_MR_SLA_ACK      0x40
+#define TW_MR_DATA_ACK     0x50
+#define TW_MR_DATA_NOT_ACK 0x58
+
+uint8_t I2C_write_byte_repeated(uint8_t sla_addr, uint8_t *data, uint8_t len) {
+
+    for (uint8_t i = 0; i < len; ++i) {
+        // (Re)start
+        TWCR = (1<<TWEN) | (1<<TWINT) | (1<<TWSTA);
+        while (!(TWCR & (1<<TWINT)));
+        uint8_t expected_status_code = (i == 0) ? TW_START : TW_REPEATED_START;
+        if ((TWSR & 0xF8) != expected_status_code) {
+            printf("ERROR TWSR=0x%x\n", TWSR & 0xF8);
+            return -1;
+        }
+
+        // Write slave address
+        TWDR = (sla_addr << 1);
+        TWCR = (1<<TWEN) | (1<<TWINT);
+        while (!(TWCR & (1<<TWINT)));
+        if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
+            printf("ERROR TWSR=0x%x\n", TWSR & 0xF8);
+            return -1;
+        }
+
+        // Write data
+        TWDR = data[i];
+        TWCR = (1<<TWEN) | (1<<TWINT);
+        while (!(TWCR & (1<<TWINT)));
+        if ((TWSR & 0xF8) != TW_MT_DATA_ACK) {
+            printf("ERROR TWSR=0x%x\n", TWSR & 0xF8);
+            return -1;
+        }
+    }
+
+    TWCR = (1<<TWEN) | (1<<TWINT) | (1<<TWSTO);
+    return 0;
+}
+
+uint8_t I2C_write_bytes(uint8_t sla_addr, uint8_t reg, uint8_t *data, uint8_t len) {
+    TWCR = (1<<TWEN) | (1<<TWINT) | (1<<TWSTA);
+    while (!(TWCR & (1<<TWINT)));
+    if ((TWSR & 0xF8) != TW_START) {
+        printf("0x%x\n", TWSR & 0xF8);
+        return 1;
+    }
+
+    TWDR = (sla_addr << 1);
+    TWCR = (1<<TWEN) | (1<<TWINT);
+    while (!(TWCR & (1<<TWINT)));
+    if ((TWSR & 0xF8) != TW_MT_SLA_ACK) return 9;
+
+    TWDR = 0;
+    TWCR = (1<<TWEN) | (1<<TWINT);
+    while (!(TWCR & (1<<TWINT)));
+    if ((TWSR & 0xF8) != TW_MT_DATA_ACK) return 10;
+
+    for (uint8_t i = 0; i < len; i++) {
+        TWDR = data[i];
+        TWCR = (1<<TWEN) | (1<<TWINT);
+        while (!(TWCR & (1<<TWINT)));
+        if ((TWSR & 0xF8) != TW_MT_DATA_ACK) return 11;
+    };
+
+    TWCR = (1<<TWEN) | (1<<TWINT) | (1<<TWSTO);
+
+    return 0;
+
+}
+
+#define ALPHANUMERIC_BUFFER_LEN 13
+static uint8_t alphanumeric_buffer[ALPHANUMERIC_BUFFER_LEN];
+
+void clear_alphanumeric_buffer() {
+    for (uint8_t i=0; i<13; ++i)
+        alphanumeric_buffer[i] = 0;
+}
+
+/* Convert an ASCII character to bitmap for the display. Add it to the buffer. */
+void add_char_to_alphanumeric_buffer(char c, uint8_t pos) {
+    printf("Add char (%c)\n", c);
+    uint8_t char_index = 255;
+    if ((0x20 <= c) && (c <= 0x7e))
+        char_index = c - 0x20;
+    printf("\tchar_index=%d\n", char_index);
+
+    // Get a standard bitmap for this char
+    static const uint16_t alphanumeric_segs[96] = {
+        0b00000000000000, // ' ' (space)
+        0b00001000001000, // '!'
+        0b00001000000010, // '"'
+        0b01001011001110, // '#'
+        0b01001011101101, // '$'
+        0b10010000100100, // '%'
+        0b00110101011001, // '&'
+        0b00001000000000, // '''
+        0b00000000111001, // '('
+        0b00000000001111, // ')'
+        0b11111100000000, // '*'
+        0b01001011000000, // '+'
+        0b10000000000000, // ','
+        0b00000011000000, // '-'
+        0b00000000000000, // '.'
+        0b10010000000000, // '/'
+        0b00000000111111, // '0'
+        0b00010000000110, // '1'
+        0b00000011011011, // '2'
+        0b00000011001111, // '3'
+        0b00000011100110  // '4'
+    };
+    uint16_t segment_map = alphanumeric_segs[char_index];
+    printf("\tsegment_map=0x%x\n", segment_map);
+
+    // Convert the standard bitmap to some wierd crap needed for this display.
+    //
+    // Every segment has an address (0-12) and a bit (0-8).
+    // The bit depends on the segment position and the position on the display.
+    // The segment index determines if the bit is low (0-3) or high (4-7)
+    // for display position 0-3 (left to right).
+    //
+    // Table explaining the segment maping:
+    //  Standard bit  | 0  1  2  3  4  5  6  7  8  9 10 11 12 13
+    // ---------------|-----------------------------------------
+    //    Address:    | 0  2  4  6  8 10 12  0  2  4  6  8 10 12
+    // High/Low digits| L  L  L  L  L  L  L  H  H  H  H  H  H  H
+    uint8_t bit_index = 0;
+    while (segment_map) {
+        uint8_t one = segment_map & 1;
+        if (one) {
+            printf("\tone for bit index %d\n", bit_index);
+            uint8_t address = (bit_index % 7)*2;
+            uint8_t is_high = (bit_index > 6) ? 1 : 0;
+            alphanumeric_buffer[address] |= 1 << (pos + 4*is_high);
+        }
+        segment_map = segment_map >> 1;
+        ++bit_index;
+    }
+    for (uint8_t i=0; i<ALPHANUMERIC_BUFFER_LEN; ++i)
+        printf("0x%x ", alphanumeric_buffer[i]);
+    printf("\n");
+}
+
+/* Update the alphanumeric buffer with a new message.
+ *
+ * msg must be 4 char long.
+ * Also return a pointer to the alphanumeric buffer.
+ */
+uint8_t* update_alphanumeric_buffer(char *msg) {
+    clear_alphanumeric_buffer();
+    add_char_to_alphanumeric_buffer(msg[0], 0);
+    add_char_to_alphanumeric_buffer(msg[1], 1);
+    add_char_to_alphanumeric_buffer(msg[2], 2);
+    add_char_to_alphanumeric_buffer(msg[3], 3);
+
+    return alphanumeric_buffer;
+}
+
+void I2C_init() {
+    TWBR = 10;       // Set bit rate to f_clk/26 ~ 40 kbps
+    TWSR = 0xf8;     // Set TWPS=0
+    TWCR = (1<<TWEN);
+}
+
+int main(void){
     stdout = &usart_stdout;
     USART_init();
-    printf("\nBegin test program\n");
 
+    printf("\nBegin test program\n");
+    printf("space: 0x%x, !: 0x%x, a: 0x%x, ~: 0x%x\n", ' ', '!', 'a', '~');
+
+    I2C_init();
     start_counter0();
-    start_counter1();
     sei();
 
-    uint8_t error_count = 0;
-    uint8_t success = 0;
+    sleep_ms0(1);
 
-    // Test 8 bit waiting/sleeping
-    uint8_t time0_8;
-    uint8_t time1_8;
-    uint8_t const ms_list_8[] = {1, 2, 4, 5, 8, 10, 15, 21, 30, 32};
+    uint8_t data[] = {0b00100001, 0b10100011, 0b11100000, 0b10000001};
+    I2C_write_byte_repeated(0x70, data, sizeof(data)/sizeof(uint8_t));
 
-    success = 0;
-    printf("8 bit tests:\n");
+    uint8_t *seg_data = update_alphanumeric_buffer("1234");
+    I2C_write_bytes(0x70, 0b0, seg_data, 13);
 
-    printf("\tbusy_wait: ");
-    for (uint8_t i=0; i<sizeof(ms_list_8)/sizeof(uint8_t); ++i) {
-        printf("%u->", ms_list_8[i]);
-        time0_8 = read_timer0();
-        busy_wait_ms0(ms_list_8[i]);
-        time1_8 = read_timer0();
-        uint8_t measure = timestamp_to_ms0(time0_8, time1_8);
-        if (ms_list_8[i] == measure) {
-            success++;
-        } else {
-            error_count++;
-        }
-        printf("%u ", measure);
-    }
-    printf("(%u/%u)\n", success, sizeof(ms_list_8)/sizeof(uint8_t));
+    while (1);
 
-    success = 0;
-    printf("\tsleep: ");
-    for (uint8_t i=0; i<sizeof(ms_list_8)/sizeof(uint8_t); ++i) {
-        printf("%u->", ms_list_8[i]);
-        time0_8 = read_timer0();
-        sleep_ms0(ms_list_8[i]);
-        time1_8 = read_timer0();
-        uint8_t measure = timestamp_to_ms0(time0_8, time1_8);
-        if (ms_list_8[i] == measure) {
-            success++;
-        } else {
-            error_count++;
-        }
-        printf("%u ", measure);
-    }
-    printf("(%u/%u)\n", success, sizeof(ms_list_8)/sizeof(uint8_t));
-
-    // Test 16 bit waiting/sleeping
-    uint16_t time0_16;
-    uint16_t time1_16;
-    uint16_t const ms_list_16[] = {1, 2, 4, 8, 30, 500, 2000, 8388};
-
-    success = 0;
-    printf("16 bit tests:\n");
-
-    printf("\tbusy_wait: ");
-    for (uint8_t i=0; i<sizeof(ms_list_16)/sizeof(uint16_t); ++i) {
-        printf("%u->", ms_list_16[i]);
-        time0_16 = read_timer1();
-        busy_wait_ms1(ms_list_16[i]);
-        time1_16 = read_timer1();
-        uint16_t measure = timestamp_to_ms1(time0_16, time1_16);
-        if (ms_list_16[i] == measure) {
-            success++;
-        } else {
-            error_count++;
-        }
-        printf("%u ", measure);
-    }
-    printf("(%u/%u)\n", success, sizeof(ms_list_16)/sizeof(uint16_t));
-
-    success = 0;
-    printf("\tsleep: ");
-    for (uint8_t i=0; i<sizeof(ms_list_16)/sizeof(uint16_t); ++i) {
-        printf("%u->", ms_list_16[i]);
-        time0_16 = read_timer1();
-        sleep_ms1(ms_list_16[i]);
-        time1_16 = read_timer1();
-        uint16_t measure = timestamp_to_ms1(time0_16, time1_16);
-        if (ms_list_16[i] == measure) {
-            success++;
-        } else {
-            error_count++;
-        }
-        printf("%u ", measure);
-    }
-    printf("(%u/%u)\n", success, sizeof(ms_list_16)/sizeof(uint16_t));
-
-    // Summary
-    if (!error_count) {
-        printf("All tests passed\n");
-    } else {
-        printf("Failed %u tests\n", error_count);
-    }
-
-    // Sweep LED brightness
-    enable();
-    uint8_t ms = 1;
-    uint8_t c = 0;
-    while(1) {
-        c = 0;
-        while(c < 10) {
-            toggle();
-            busy_wait_ms0(ms);
-            toggle();
-            busy_wait_ms0(16 - ms);
-            c++;
-        }
-        ms = (ms == 15) ? 1 : ms + 1;
-    };
+    return 0;
 }
 
