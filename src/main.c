@@ -119,11 +119,8 @@ int main(void){
 
     // Initiate display
     TWI_write_byte(0x70, 0b00100001);
-    sleep_ms0(1);
     TWI_write_byte(0x70, 0b10100011);
-    sleep_ms0(1);
     TWI_write_byte(0x70, 0b11100000);
-    sleep_ms0(1);
     TWI_write_byte(0x70, 0b10000001);
 
     // Write to display

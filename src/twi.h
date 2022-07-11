@@ -12,6 +12,13 @@
 
 extern void TWI_init();
 
+/* Wait for the current twi transmission to end.
+ *
+ * Does nothing if there is no current twi transmission.
+ *
+ * Note that this routine is called automatically when writing. */
+extern void TWI_wait();
+
 /* Write one register/command byte to a slave.
  *
  * This function is non-blocking, and the main program will continue before the
