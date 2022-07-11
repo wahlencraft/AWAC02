@@ -6,9 +6,6 @@
 
 extern void USART_init();
 extern void USART_putchar(char c);
-extern int USART_putchar_printf(char var, FILE *stream);
-
-static FILE usart_stdout = FDEV_SETUP_STREAM(USART_putchar_printf, NULL, _FDEV_SETUP_WRITE);
 
 #endif // USART_H_H
 

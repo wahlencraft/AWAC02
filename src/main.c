@@ -1,15 +1,12 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <stdio.h>
 
 #include "usart.h"
 #include "time.h"
 #include "io.h"
 #include "twi.h"
-
-#include <avr/io.h>
-#include <stdio.h>
+#include "log.h"
 
 #define ALPHANUMERIC_BUFFER_LEN 13
 static uint8_t alphanumeric_buffer[ALPHANUMERIC_BUFFER_LEN];
@@ -105,10 +102,7 @@ extern uint8_t twi_data[16];
 extern uint8_t twi_data_ptr;
 
 int main(void){
-    stdout = &usart_stdout;
-    USART_init();
-
-    printf("\nBegin test program\n");
+    init_log(INFO | ERROR | WARNING);
 
     TWI_init();
     start_counter0();
@@ -117,18 +111,26 @@ int main(void){
 
     sleep_ms0(1);
 
+    // Test some logging
+    log(ERROR, "FATAL ERROR\n");
+    log(WARNING, "Warning: %d\n", 4);
+
     // Initiate display
+    log(INFO, "Initiate display\n");
     TWI_write_byte(0x70, 0b00100001);
     TWI_write_byte(0x70, 0b10100011);
     TWI_write_byte(0x70, 0b11100000);
     TWI_write_byte(0x70, 0b10000001);
 
     // Write to display
+    log(INFO, "Write to display\n");
     uint8_t *seg_data = update_alphanumeric_buffer("0000");
     TWI_write_bytes(0x70, 0b0, seg_data, 13);
     sleep_ms1(1000);
     seg_data = update_alphanumeric_buffer("1234");
     TWI_write_bytes(0x70, 0b0, seg_data, 13);
+
+    log(INFO, "Test program finished\n");
 
     while (1);
 
