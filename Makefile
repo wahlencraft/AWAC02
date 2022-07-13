@@ -36,11 +36,13 @@ C_SOURCE := $(shell find $(SOURCE_DIR) -name '*.c')
 ASM_SOURCE := $(shell find $(SOURCE_DIR) -name '*.S')
 C_OBJECTS := $(patsubst $(SOURCE_DIR)/%.c, $(OBJECT_DIR)/%.o, $(C_SOURCE))
 ASM_OBJECTS := $(patsubst $(SOURCE_DIR)/%.S, $(OBJECT_DIR)/%.o, $(ASM_SOURCE))
+ALL_OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
+DEPS := $(ALL_OBJECTS:.o=.d)
 
 OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -Wall -Os -MMD -MP -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # symbolic targets:
 all: $(OUT_NAME).hex
@@ -84,3 +86,5 @@ $(OUT_NAME).hex: $(OUT_NAME).elf
 # Targets for code debugging and analysis:
 disasm:	$(OUT_NAME).elf
 	avr-objdump -d $(OUT_NAME).elf
+
+-include $(DEPS)
