@@ -2,6 +2,7 @@
 #include "flash.h"
 #include "twi.h"
 #include "constants.h"
+#include "log.h"
 
 #define DISPLAY_BUFFER_LEN 13
 
@@ -9,6 +10,7 @@ static uint8_t display_buffer[DISPLAYS][DISPLAY_BUFFER_LEN];
 
 void initiate_displays() {
     for (uint8_t i=0; i<DISPLAYS; ++i) {
+        log(INFO, "Initiating display %d\n", i);
         TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b00100001);
         TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b10100011);
         TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b11100000);
@@ -18,17 +20,18 @@ void initiate_displays() {
 
 
 void clear_display_buffer(uint8_t display) {
+    log(DISPLAY, "Clear display buffer %d\n", display);
     for (uint8_t i=0; i<13; ++i)
         display_buffer[display][i] = 0;
 }
 
 void clear_display_buffers() {
     for (uint8_t i=0; i<DISPLAYS; ++i)
-        for (uint8_t j=0; j<13; ++j)
-            display_buffer[i][j] = 0;
+        clear_display_buffer(i);
 }
 
 void add_char_to_display_buffer(char c, uint8_t pos, uint8_t display) {
+    log(DISPLAY, "Add %c to display buffer %d:%d\n", c, display, pos);
     uint16_t segment_map = ascii2seg(c);
 
     // Convert the standard bitmap to some wierd crap needed for this display.
@@ -78,6 +81,7 @@ void update_display_buffers(char *msg, uint8_t len) {
 }
 
 void write_to_display(uint8_t display) {
+    log(DISPLAY, "Write to display %d\n", display);
     TWI_write_bytes(DISPLAY_SLAVE_ADDRESS_START + display, 0b0,
                     &display_buffer[display][0], DISPLAY_BUFFER_LEN);
 }

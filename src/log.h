@@ -16,12 +16,12 @@
 #define LOG_H_
 
 #include "constants.h"
+#include <stdint.h>
 
 #define INFO 1<<0
 #define ERROR 1<<1
 #define WARNING 1<<2
-
-static uint8_t log_levels;
+#define DISPLAY 1<<3
 
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
@@ -32,46 +32,18 @@ static uint8_t log_levels;
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
 
-#ifdef LOG
-    char* log_level_to_string(uint8_t lvl) {
-        static char info[]    = "INFO";
-        static char error[]   = KRED"ERROR";
-        static char warning[] = KYEL"WARN";
-        char *label = info;
-        switch (lvl) {
-            case INFO:
-                label = info;
-                break;
-            case ERROR:
-                label = error;
-                break;
-            case WARNING:
-                label = warning;
-                break;
-            default:
-                break;
-        }
-        return label;
-    }
-#endif
+char* log_level_to_string(uint8_t lvl);
+extern uint8_t log_levels;
 
 #ifdef LOG
 #   include <stdio.h>
 #   include "usart.h"
     extern int USART_putchar_printf(char var, FILE *stream);
-    static FILE usart_stdout = FDEV_SETUP_STREAM(USART_putchar_printf, NULL, _FDEV_SETUP_WRITE);
 #   define log(lvl, fmt, args...)({if (lvl & log_levels) printf("%s "__FILE__": "fmt KNRM, log_level_to_string(lvl), ##args);})
 #else
 #   define log(lvl, fmt, args...)  // Do nothing
 #endif
 
-inline static void init_log(uint8_t levels) {
-#ifdef LOG
-    stdout = &usart_stdout;
-    USART_init();
-    log_levels = levels;
-    printf("\nINITIATE LOG\n");
-#endif
-}
+void init_log(uint8_t levels);
 
 #endif  // LOG_H_

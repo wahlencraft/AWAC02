@@ -17,7 +17,7 @@ extern uint8_t twi_data[16];
 extern uint8_t twi_data_ptr;
 
 int main(void){
-    init_log(INFO | ERROR | WARNING);
+    init_log(INFO | ERROR | WARNING | DISPLAY);
 
     TWI_init();
     start_counter0();
@@ -29,13 +29,13 @@ int main(void){
     initiate_displays();
 
     // Write to display
-    log(INFO, "Write to display\n");
+    log(INFO, "Start test program\n");
 
     char c0 = ' ';
     char c1 = c0 + 1;
     char c2 = c0 + 2;
     char c3 = c0 + 3;
-    while (c3 != 0x7f) {
+    while (1) {
         clear_display_buffers();
         add_char_to_display_buffers(c0, 0);
         add_char_to_display_buffers(c1, 1);
@@ -45,10 +45,10 @@ int main(void){
         write_to_displays();
         sleep_ms1(1000);
 
-        c0++;
-        c1++;
-        c2++;
-        c3++;
+        c0 = (c0 == 0x7f) ? ' ' : c0 + 1;
+        c1 = (c1 == 0x7f) ? ' ' : c1 + 1;
+        c2 = (c2 == 0x7f) ? ' ' : c2 + 1;
+        c3 = (c3 == 0x7f) ? ' ' : c3 + 1;
     }
     clear_display_buffers();
     write_to_displays();
