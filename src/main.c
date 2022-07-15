@@ -7,6 +7,7 @@
 #include "io.h"
 #include "twi.h"
 #include "log.h"
+#include "flash.h"
 
 #define ALPHANUMERIC_BUFFER_LEN 13
 static uint8_t alphanumeric_buffer[ALPHANUMERIC_BUFFER_LEN];
@@ -18,38 +19,7 @@ void clear_alphanumeric_buffer() {
 
 /* Convert an ASCII character to bitmap for the display. Add it to the buffer. */
 void add_char_to_alphanumeric_buffer(char c, uint8_t pos) {
-    //printf("Add char (%c)\n", c);
-    uint8_t char_index = 255;
-    if ((0x20 <= c) && (c <= 0x7e))
-        char_index = c - 0x20;
-    //printf("\tchar_index=%d\n", char_index);
-
-    // Get a standard bitmap for this char
-    static const uint16_t alphanumeric_segs[96] = {
-        0b00000000000000, // ' ' (space)
-        0b00001000001000, // '!'
-        0b00001000000010, // '"'
-        0b01001011001110, // '#'
-        0b01001011101101, // '$'
-        0b10010000100100, // '%'
-        0b00110101011001, // '&'
-        0b00001000000000, // '''
-        0b00000000111001, // '('
-        0b00000000001111, // ')'
-        0b11111100000000, // '*'
-        0b01001011000000, // '+'
-        0b10000000000000, // ','
-        0b00000011000000, // '-'
-        0b00000000000000, // '.'
-        0b10010000000000, // '/'
-        0b00000000111111, // '0'
-        0b00010000000110, // '1'
-        0b00000011011011, // '2'
-        0b00000011001111, // '3'
-        0b00000011100110  // '4'
-    };
-    uint16_t segment_map = alphanumeric_segs[char_index];
-    //printf("\tsegment_map=0x%x\n", segment_map);
+    uint16_t segment_map = ascii2seg(c);
 
     // Convert the standard bitmap to some wierd crap needed for this display.
     //
@@ -75,9 +45,6 @@ void add_char_to_alphanumeric_buffer(char c, uint8_t pos) {
         segment_map = segment_map >> 1;
         ++bit_index;
     }
-    //for (uint8_t i=0; i<ALPHANUMERIC_BUFFER_LEN; ++i)
-    //    printf("0x%x ", alphanumeric_buffer[i]);
-    //printf("\n");
 }
 
 /* Update the alphanumeric buffer with a new message.
@@ -124,11 +91,28 @@ int main(void){
 
     // Write to display
     log(INFO, "Write to display\n");
-    uint8_t *seg_data = update_alphanumeric_buffer("0000");
-    TWI_write_bytes(0x70, 0b0, seg_data, 13);
-    sleep_ms1(1000);
-    seg_data = update_alphanumeric_buffer("1234");
-    TWI_write_bytes(0x70, 0b0, seg_data, 13);
+
+    char c0 = ' ';
+    char c1 = c0 + 1;
+    char c2 = c0 + 2;
+    char c3 = c0 + 3;
+    while (c3 != 0x7f) {
+        clear_alphanumeric_buffer();
+        add_char_to_alphanumeric_buffer(c0, 0);
+        add_char_to_alphanumeric_buffer(c1, 1);
+        add_char_to_alphanumeric_buffer(c2, 2);
+        add_char_to_alphanumeric_buffer(c3, 3);
+
+        TWI_write_bytes(0x70, 0b0, alphanumeric_buffer, 13);
+        sleep_ms1(1000);
+
+        c0++;
+        c1++;
+        c2++;
+        c3++;
+    }
+    clear_alphanumeric_buffer();
+    TWI_write_bytes(0x70, 0b0, alphanumeric_buffer, 13);
 
     log(INFO, "Test program finished\n");
 
