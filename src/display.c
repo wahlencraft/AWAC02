@@ -6,18 +6,40 @@
 
 #define DISPLAY_BUFFER_LEN 13
 
+#define REG_SYS_SETUP 0b00100000
+#define REG_DISP_SETUP 0b10000000
+#define REG_DIMM_SET 0b11100000
+
 static uint8_t display_buffer[DISPLAYS][DISPLAY_BUFFER_LEN];
 
 void initiate_displays() {
     for (uint8_t i=0; i<DISPLAYS; ++i) {
         log(INFO, "Initiating display %d\n", i);
-        TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b00100001);
-        TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b10100011);
-        TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b11100000);
-        TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + i, 0b10000001);
+        set_display_osc(ON, i);
+        set_display_brightness(0, i);
+        set_display(ON, 0, i);
     }
 }
 
+void set_display_osc(uint8_t on_off, uint8_t display) {
+    char on[] = "ON";
+    char off[] = "OFF";
+    log(DISPLAY, "Set display %d oscillator (%s)\n", display, (on_off) ? on : off);
+    TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display, REG_SYS_SETUP | on_off);
+}
+
+void set_display(uint8_t on_off, uint8_t blink_set, uint8_t display) {
+    char on[] = "ON";
+    char off[] = "OFF";
+    log(DISPLAY, "Set display %d (%s), blink_set=%d\n", display, (on_off) ? on : off, blink_set);
+    TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display,
+                   REG_DISP_SETUP | on_off | blink_set << 1);
+}
+
+void set_display_brightness(uint8_t level, uint8_t display) {
+    log(DISPLAY, "Set display %d duty to %d/16\n", display, level + 1);
+    TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display, REG_DIMM_SET | level);
+}
 
 void clear_display_buffer(uint8_t display) {
     log(DISPLAY, "Clear display buffer %d\n", display);

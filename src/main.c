@@ -35,6 +35,7 @@ int main(void){
     char c1 = c0 + 1;
     char c2 = c0 + 2;
     char c3 = c0 + 3;
+
     while (1) {
         clear_display_buffers();
         add_char_to_display_buffers(c0, 0);
@@ -43,7 +44,7 @@ int main(void){
         add_char_to_display_buffers(c3, 3);
 
         write_to_displays();
-        sleep_ms1(1000);
+        //sleep_ms1(1000);
 
         c0 = (c0 == 0x7f) ? ' ' : c0 + 1;
         c1 = (c1 == 0x7f) ? ' ' : c1 + 1;
