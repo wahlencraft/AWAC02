@@ -12,13 +12,16 @@
 
 static uint8_t display_buffer[DISPLAYS][DISPLAY_BUFFER_LEN];
 
-void initiate_displays() {
-    for (uint8_t i=0; i<DISPLAYS; ++i) {
-        log(INFO, "Initiating display %d\n", i);
-        set_display_osc(ON, i);
-        set_display_brightness(0, i);
-        set_display(ON, 0, i);
-    }
+void initiate_display(uint8_t display) {
+    log(INFO, "Initiating display %d\n", display);
+    set_display_osc(ON, display);
+    set_display_brightness(0, display);
+    set_display(ON, 0, display);
+}
+
+void initiate_all_displays() {
+    for (int i=0; i < DISPLAYS; ++i)
+        initiate_display(i);
 }
 
 void set_display_osc(uint8_t on_off, uint8_t display) {
@@ -26,6 +29,11 @@ void set_display_osc(uint8_t on_off, uint8_t display) {
     char off[] = "OFF";
     log(DISPLAY, "Set display %d oscillator (%s)\n", display, (on_off) ? on : off);
     TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display, REG_SYS_SETUP | on_off);
+}
+
+void set_all_display_osc(uint8_t on_off) {
+    for (uint8_t i=0; i < DISPLAYS; ++i)
+        set_display_osc(on_off, i);
 }
 
 void set_display(uint8_t on_off, uint8_t blink_set, uint8_t display) {
@@ -36,9 +44,19 @@ void set_display(uint8_t on_off, uint8_t blink_set, uint8_t display) {
                    REG_DISP_SETUP | on_off | blink_set << 1);
 }
 
+void set_all_displays(uint8_t on_off, uint8_t blink_set) {
+    for (uint8_t i=0; i < DISPLAYS; ++i)
+        set_display(on_off, blink_set, i);
+}
+
 void set_display_brightness(uint8_t level, uint8_t display) {
     log(DISPLAY, "Set display %d duty to %d/16\n", display, level + 1);
     TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display, REG_DIMM_SET | level);
+}
+
+void set_all_display_brightness(uint8_t level) {
+    for (uint8_t i=0; i < DISPLAYS; ++i)
+        set_display_brightness(level, i);
 }
 
 void clear_display_buffer(uint8_t display) {
@@ -47,7 +65,7 @@ void clear_display_buffer(uint8_t display) {
         display_buffer[display][i] = 0;
 }
 
-void clear_display_buffers() {
+void clear_all_display_buffers() {
     for (uint8_t i=0; i<DISPLAYS; ++i)
         clear_display_buffer(i);
 }
@@ -85,20 +103,20 @@ void add_char_to_display_buffers(char c, uint8_t pos) {
     add_char_to_display_buffer(c, pos%4, pos/4);
 }
 
-void update_display_buffer(char *msg, uint8_t display) {
+void set_display_buffer_string(char *str, uint8_t display) {
     clear_display_buffer(display);
-    add_char_to_display_buffer(msg[0], 0, display);
-    add_char_to_display_buffer(msg[1], 1, display);
-    add_char_to_display_buffer(msg[2], 2, display);
-    add_char_to_display_buffer(msg[3], 3, display);
+    add_char_to_display_buffer(str[0], 0, display);
+    add_char_to_display_buffer(str[1], 1, display);
+    add_char_to_display_buffer(str[2], 2, display);
+    add_char_to_display_buffer(str[3], 3, display);
 }
 
-void update_display_buffers(char *msg, uint8_t len) {
+void set_display_buffer_long_string(char *str, uint8_t len) {
     for (uint8_t i=0; i < (len - 1)/4 + 1; ++i) {
         clear_display_buffer(i);
     }
     for (uint8_t i=0; i < len; ++i) {
-        add_char_to_display_buffer(msg[i], i%4, i/4);
+        add_char_to_display_buffer(str[i], i%4, i/4);
     }
 }
 
@@ -108,7 +126,7 @@ void write_to_display(uint8_t display) {
                     &display_buffer[display][0], DISPLAY_BUFFER_LEN);
 }
 
-void write_to_displays() {
+void write_to_all_displays() {
     for (uint8_t i=0; i<DISPLAYS; ++i)
         write_to_display(i);
 }

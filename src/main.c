@@ -26,7 +26,7 @@ int main(void){
 
     sleep_ms0(1);
 
-    initiate_displays();
+    initiate_all_displays();
 
     // Write to display
     log(INFO, "Start test program\n");
@@ -37,13 +37,13 @@ int main(void){
     char c3 = c0 + 3;
 
     while (1) {
-        clear_display_buffers();
+        clear_all_display_buffers();
         add_char_to_display_buffers(c0, 0);
         add_char_to_display_buffers(c1, 1);
         add_char_to_display_buffers(c2, 2);
         add_char_to_display_buffers(c3, 3);
 
-        write_to_displays();
+        write_to_all_displays();
         //sleep_ms1(1000);
 
         c0 = (c0 == 0x7f) ? ' ' : c0 + 1;
@@ -51,8 +51,8 @@ int main(void){
         c2 = (c2 == 0x7f) ? ' ' : c2 + 1;
         c3 = (c3 == 0x7f) ? ' ' : c3 + 1;
     }
-    clear_display_buffers();
-    write_to_displays();
+    clear_all_display_buffers();
+    write_to_all_displays();
 
     log(INFO, "Test program finished\n");
 
