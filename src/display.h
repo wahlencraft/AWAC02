@@ -69,6 +69,10 @@ void add_char_to_display_buffer(char c, uint8_t pos, uint8_t display);
  */
 void add_char_to_display_buffers(char c, uint8_t pos);
 
+void add_colon_to_display_buffer(uint8_t display);
+
+void add_decimal_to_display_buffer(uint8_t display);
+
 /* Update the display buffer with a new string.
  *
  * The string must be 4 characters long

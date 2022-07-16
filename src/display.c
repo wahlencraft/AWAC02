@@ -103,6 +103,16 @@ void add_char_to_display_buffers(char c, uint8_t pos) {
     add_char_to_display_buffer(c, pos%4, pos/4);
 }
 
+void add_colon_to_display_buffer(uint8_t display) {
+    log(DISPLAY, "Add colon to display buffer %d\n", display);
+    display_buffer[display][1] |= 1;
+}
+
+void add_decimal_to_display_buffer(uint8_t display) {
+    log(DISPLAY, "Add decimal to display buffer %d\n", display);
+    display_buffer[display][3] |= 1;
+}
+
 void set_display_buffer_string(char *str, uint8_t display) {
     clear_display_buffer(display);
     add_char_to_display_buffer(str[0], 0, display);

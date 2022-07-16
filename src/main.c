@@ -36,6 +36,13 @@ int main(void){
     char c2 = c0 + 2;
     char c3 = c0 + 3;
 
+    set_display_buffer_string("TEST", 0);
+    add_colon_to_display_buffer(0);
+    add_decimal_to_display_buffer(0);
+    write_to_all_displays();
+
+    while(1);
+
     while (1) {
         clear_all_display_buffers();
         add_char_to_display_buffers(c0, 0);
