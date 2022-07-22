@@ -22,6 +22,7 @@
 #define ERROR 1<<1
 #define WARNING 1<<2
 #define DISPLAY 1<<3
+#define TWI 1<<4
 
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
@@ -45,5 +46,7 @@ extern uint8_t log_levels;
 #endif
 
 void init_log(uint8_t levels);
+
+void log_twi_status_codes();
 
 #endif  // LOG_H_

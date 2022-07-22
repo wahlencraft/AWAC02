@@ -41,3 +41,18 @@ void init_log(uint8_t levels) {
     printf("\nINITIATE LOG\n");
 #endif
 }
+
+extern uint8_t twi_status_log[32];
+extern uint8_t twi_status_log_len;
+
+void log_twi_status_codes() {
+#ifdef LOG
+    if (log_levels & TWI) {
+        // Print twi status codes from the last transaction
+        printf("TWI status codes: ");
+        for (int i=0; i<twi_status_log_len; ++i)
+            printf("0x%x ", twi_status_log[i]);
+        printf("\n");
+    }
+#endif
+}

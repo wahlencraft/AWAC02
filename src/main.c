@@ -10,23 +10,21 @@
 #include "flash.h"
 #include "display.h"
 
-extern uint8_t twi_sla_addr;
-extern uint8_t twi_regcom;
-extern uint8_t twi_data_len;
-extern uint8_t twi_data[16];
-extern uint8_t twi_data_ptr;
-
 int main(void){
-    init_log(INFO | ERROR | WARNING | DISPLAY);
+    init_log(INFO | ERROR | WARNING | TWI);
 
     TWI_init();
     start_counter0();
     start_counter1();
     sei();
 
+    // Enable debug led
+    enable();
+
     sleep_ms0(1);
 
     initiate_all_displays();
+    sleep_ms0(10);
 
     // Write to display
     log(INFO, "Start test program\n");
@@ -37,10 +35,20 @@ int main(void){
     char c3 = c0 + 3;
 
     set_display_buffer_string("TEST", 0);
-    add_colon_to_display_buffer(0);
-    add_decimal_to_display_buffer(0);
     write_to_all_displays();
 
+    uint8_t data = TWI_read_byte(0x70, 0);
+    printf("Data read from display: 0x%x\n", data);
+
+    set_display_buffer_string("AWAC", 0);
+    write_to_all_displays();
+
+    data = TWI_read_byte(0x70, 0);
+    printf("Data read from display: 0x%x\n", data);
+
+    log_twi_status_codes();
+
+    log(INFO, "Test program finished\n");
     while(1);
 
     while (1) {
@@ -51,7 +59,7 @@ int main(void){
         add_char_to_display_buffers(c3, 3);
 
         write_to_all_displays();
-        //sleep_ms1(1000);
+        //sleep_ms1(1000);  // Only needed when not logging
 
         c0 = (c0 == 0x7f) ? ' ' : c0 + 1;
         c1 = (c1 == 0x7f) ? ' ' : c1 + 1;

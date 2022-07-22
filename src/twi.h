@@ -25,6 +25,12 @@ extern void TWI_wait();
  * write is finished. */
 extern void TWI_write_byte(uint8_t sla_addr, uint8_t regcom);
 
+/* Read one byte from a slave register.
+ *
+ * This function is blocking, the main program will not continue before the
+ * read is finished. */
+extern uint8_t TWI_read_byte(uint8_t sla_addr, uint8_t reg);
+
 /* Write one register/command byte + len data bytes to a slave
  *
  * This function is non-blocking, and the main program will continue before the
