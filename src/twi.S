@@ -120,14 +120,12 @@ TWI_write_byte:
 
     RET;
 
-.global TWI_read_byte
-; read one byte from slave
+.global TWI_read
 ; Input:
 ; R24: Slave address
 ; R22: Read register
-; Output:
-; R24: Data byte
-TWI_read_byte:
+; R20: Number of bytes to read
+TWI_read:
     ; Wait for twi free
     CALL TWI_wait;
 
@@ -142,17 +140,16 @@ TWI_read_byte:
     STS twi_sla_addr, R24;
 
     ; Store data in buffer
-    STS twi_data_len, R1;  only register/command value, so length 0
+    STS twi_data_len, R20;
+    STS twi_data_ptr, R1;
     STS twi_regcom, R22;
 
     ; Send start condition, interrupt enable
     LDI R24, (1<<TWEN) | (1<<TWINT) | (1<<TWSTA) | (1<<TWIE);
     STS TWCR, R24;
 
-    ; Wait for read to finish
-    CALL TWI_wait;
-    LDS R24, twi_data
-
+    ; The transaction will now continue in interrupts. To extract the data,
+    ; call TWI_read_receive.
     RET;
 
 .global TWI_write_bytes
@@ -215,6 +212,7 @@ twi_writing_done:
 .global TWI_vect
 TWI_vect:
     PUSH R16;
+    PUSH R22;
     PUSH R24;
     PUSH R25;
     PUSH XL;
@@ -239,7 +237,8 @@ TWI_vect:
     BREQ TWI_vect_MT_DATA_ACK;
     CPI R24, TWI_MR_SLA_ACK;
     BREQ TWI_vect_MR_SLA_ACK;
-    ; CPI R24, TWI_MR_DATA_ACK TODO
+    CPI R24, TWI_MR_DATA_ACK;
+    BREQ TWI_vect_MR_DATA_ACK;
     CPI R24, TWI_MR_DATA_NOT_ACK;
     BREQ TWI_vect_MR_DATA_NOT_ACK;
     ; Error. This point should not be reached
@@ -263,15 +262,15 @@ TWI_vect_MT_SLA_ACK:  ; Slave has sent ACK (Master Transmitter)
     JMP TWI_vect_end;
 
 TWI_vect_MR_SLA_ACK:  ; Slave has sent ACK (Master Receiver)
-    ; LDI R24, (1<<TWINT) | (1<<TWEN) | (1<<TWEA) | (1<<TWIE);  ; TODO read multiple bytes
-    ; Read one byte, then send NACK
-    LDI R24, (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
-    JMP TWI_vect_end;
+    ; Read one more byte, then
+    ; - send ACK if twi_data_ptr + 1 < twi_data_len
+    ; - send NACK if twi_data_ptr + 1 >= twi_data_len
+    JMP TWI_read_continue;
 
 TWI_vect_MT_DATA_ACK:  ; Slave has sent ACK in response to data
     ; What is the twi status?
-    LDS R19, twi_status;
-    CPI R19, TWI_STATUS_READING;
+    LDS R24, twi_status;
+    CPI R24, TWI_STATUS_READING;
     BREQ twi_restart_for_read;
     ; twi status is "writing", continue
 
@@ -298,11 +297,33 @@ TWI_vect_MT_DATA_ACK:  ; Slave has sent ACK in response to data
     LDI R24, (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
     JMP TWI_vect_end;
 
-TWI_vect_MR_DATA_NOT_ACK:  ; Data byte has been received; NOT ACK has been returned
-    ; Save data to buffer
-    ; TODO handle more than 1 byte
+TWI_vect_MR_DATA_ACK:  ; Data byte has been received; ACK has been returned
+    ; twi_data[twi_data_ptr] = TWDR
     LDS R24, TWDR;
-    STS twi_data, R24;
+    LDS R22, twi_data_ptr;
+    LDI XL, lo8(twi_data);
+    LDI XH, hi8(twi_data);
+    ADD XL, R22;
+    ADC XH, R1;
+    ST X, R24;
+    ; twi_data_ptr++
+    INC R22;
+    STS twi_data_ptr, R22;
+
+    ; Read one more byte, then
+    ; - send ACK if twi_data_ptr + 1 < twi_data_len
+    ; - send NACK if twi_data_ptr + 1 >= twi_data_len
+    JMP TWI_read_continue;
+
+TWI_vect_MR_DATA_NOT_ACK:  ; Data byte has been received; NOT ACK has been returned
+    ; twi_data[twi_data_ptr] = TWDR
+    LDS R24, TWDR;
+    LDS R25, twi_data_ptr;
+    LDI XL, lo8(twi_data);
+    LDI XH, hi8(twi_data);
+    ADD XL, R25;
+    ADC XH, R1;
+    ST X, R24;
 
     ; Send a stop condition
 
@@ -321,6 +342,7 @@ TWI_vect_end:
     POP XL;
     POP R25;
     POP R24;
+    POP R22;
     POP R16;
     RETI;
 
@@ -336,5 +358,26 @@ twi_restart_for_read:
     STS twi_sla_addr, r24;
     ; Generate a reapeated start condition
     LDI R24, (1<<TWINT) | (1<<TWSTA) | (1<<TWEN) | (1<<TWIE);
+    JMP TWI_vect_end;
+
+; Read one more byte, then
+; - send ACK if twi_data_ptr + 1 < twi_data_len
+; - send NACK if twi_data_ptr + 1 >= twi_data_len
+TWI_read_continue:
+    ; Read one byte, then send ACK
+    LDI R24, (1<<TWINT) | (1<<TWEN) | (1<<TWEA) | (1<<TWIE);
+
+    ; R22 = twi_data_ptr + 1
+    LDS R22, twi_data_ptr;
+    INC R22;
+
+    ; R25 = twi_data_len
+    LDS R25, twi_data_len
+
+    CP R22, R25;
+    BRLT TWI_vect_end; Branch if R22 < R25
+
+    ; Change to NACK
+    LDI R24, (1<<TWINT) | (1<<TWEN) | (1<<TWIE);
     JMP TWI_vect_end;
 

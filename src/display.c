@@ -132,6 +132,10 @@ void set_display_buffer_long_string(char *str, uint8_t len) {
 
 void write_to_display(uint8_t display) {
     log(DISPLAY, "Write to display %d\n", display);
+    printf("Display buffer:\n\t");
+    for (uint8_t i=0; i<DISPLAY_BUFFER_LEN; ++i)
+        printf("0x%x ", display_buffer[display][i]);
+    printf("\n");
     TWI_write_bytes(DISPLAY_SLAVE_ADDRESS_START + display, 0b0,
                     &display_buffer[display][0], DISPLAY_BUFFER_LEN);
 }

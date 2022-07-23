@@ -10,6 +10,9 @@
 #ifndef TWI_H_
 #define TWI_H_
 
+extern volatile uint8_t twi_data[];
+extern volatile uint8_t twi_data_len;
+
 extern void TWI_init();
 
 /* Wait for the current twi transmission to end.
@@ -25,11 +28,13 @@ extern void TWI_wait();
  * write is finished. */
 extern void TWI_write_byte(uint8_t sla_addr, uint8_t regcom);
 
-/* Read one byte from a slave register.
+/* Read 'len' bytes from slave starting at register 'reg'.
  *
- * This function is blocking, the main program will not continue before the
- * read is finished. */
-extern uint8_t TWI_read_byte(uint8_t sla_addr, uint8_t reg);
+ * The result will be saved in the global array twi_data.
+ *
+ * This function is non-blocking, and the main program will continue before the
+ * write is finished. To wait for the write to finish, call TWI_wait. */
+extern void TWI_read(uint8_t sla_addr, uint8_t reg, uint8_t len);
 
 /* Write one register/command byte + len data bytes to a slave
  *
