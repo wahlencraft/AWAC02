@@ -127,7 +127,7 @@ ascii2seg:
     CPI R24, 0x7f-0x20;
     BRLT ascii2seg_ok_char;
 ascii2seg_unknown_char:
-    LDI R24, 255;
+    LDI R24, 95;
 ascii2seg_ok_char:
 
     ; Load start address
