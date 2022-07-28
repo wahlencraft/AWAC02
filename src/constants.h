@@ -5,7 +5,7 @@
 #define LOG
 
 // Configure display
-#define DISPLAYS 1
+#define DISPLAYS 2
 #define DISPLAY_SLAVE_ADDRESS_START 0x70
 
 #endif  // CONSTANTS_H_
