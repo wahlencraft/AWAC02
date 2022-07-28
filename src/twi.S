@@ -80,13 +80,6 @@ TWI_wait:
     LDS R19, twi_status;
     CPI R19, TWI_STATUS_FREE;
     BREQ twi_wait_end;
-    ; Enable sleep mode
-    LDS R18, SMCR;
-    SBR R18, (1<<SE);
-    STS SMCR, R18;
-
-    SLEEP;  Sleep until interrupt
-
     JMP TWI_wait;  Try again
 twi_wait_end:
     RET;

@@ -33,17 +33,13 @@ int main(void){
 
     set_display_buffer_string("TEST", 0);
     print_all_display_buffers();
-    write_to_display(0);
-    TWI_wait();
-    write_to_display(1);
+    write_to_all_displays();
+
     sleep_ms1(1000);
 
-    TWI_wait();
     set_display_buffer_long_string("Albin W", 7);
-    write_to_display(0);
-    TWI_wait();
-    write_to_display(1);
-    TWI_wait();
+
+    write_to_all_displays();
 
     log(INFO, "Test program finished\n");
     while(1);

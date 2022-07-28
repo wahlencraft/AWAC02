@@ -90,4 +90,7 @@ void set_display_buffer_long_string(char *str, uint8_t len);
 void write_to_display(uint8_t display);
 void write_to_all_displays();
 
+void print_display_buffer(uint8_t display);
+void print_all_display_buffers();
+
 #endif  // DISPLAY_H_
