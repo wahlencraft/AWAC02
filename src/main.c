@@ -9,9 +9,10 @@
 #include "log.h"
 #include "flash.h"
 #include "display.h"
+#include "clock.h"
 
 int main(void){
-    init_log(INFO | ERROR | WARNING | TWI);
+    init_log(INFO | ERROR | WARNING | CLOCK);
 
     start_counter0();
     start_counter1();
@@ -20,13 +21,11 @@ int main(void){
 
     // Enable debug led
     enable();
-    toggle();
 
     sleep_ms0(1);
 
     initiate_all_displays();
     sleep_ms0(10);
-
 
     // Write to display
     log(INFO, "Start test program\n");
@@ -36,30 +35,12 @@ int main(void){
 
     sleep_ms1(1000);
 
-    log(INFO, "Test RTC\n");
-    uint8_t config[] = {0x80};
-    TWI_write_bytes(0b1101111, 0, config, 1);
-
+    start_clock();
     while (1) {
-        busy_wait_ms1(1000);
-        TWI_read(0b1101111, 0, 3);
-        TWI_wait();
-        char s0 = (0x0f & twi_data[0]) + 0x30;
-        char s1 = ((0x70 & twi_data[0])>>4) + 0x30;
-        char m0 = (0x0f & twi_data[1]) + 0x30;
-        char m1 = ((0x70 & twi_data[1])>>4) + 0x30;
-        char h0 = (0x0f & twi_data[2]) + 0x30;
-        char h1 = ((0x70 & twi_data[2])>>4) + 0x30;
-        clear_all_display_buffers();
-        add_char_to_display_buffer(s0, 3, 1);
-        add_char_to_display_buffer(s1, 2, 1);
-        add_char_to_display_buffer(m0, 1, 1);
-        add_char_to_display_buffer(m1, 0, 1);
-        add_colon_to_display_buffer(1);
-        add_char_to_display_buffer(h0, 3, 0);
-        add_char_to_display_buffer(h1, 2, 0);
-
-        write_to_all_displays();
+        show_clock(HOUR_MIN_SEC);
+        //show_clock(DOTW_HOUR_MIN);
+        //show_clock(YEAR_MON_DAY);
+        sleep_ms1(1000);
     }
 
     log(INFO, "Test program finished\n");

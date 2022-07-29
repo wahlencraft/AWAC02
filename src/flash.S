@@ -148,3 +148,76 @@ ascii2seg_ok_char:
     POP ZL;
     POP ZH;
     RET;
+
+
+; Day number to ASCII string
+day_table:
+    .byte 'M'
+    .byte 'O'
+    .byte 'N'
+    .byte ' '
+    .byte 'T'
+    .byte 'U'
+    .byte 'E'
+    .byte ' '
+    .byte 'W'
+    .byte 'E'
+    .byte 'D'
+    .byte ' '
+    .byte 'T'
+    .byte 'H'
+    .byte 'U'
+    .byte ' '
+    .byte 'F'
+    .byte 'R'
+    .byte 'I'
+    .byte ' '
+    .byte 'S'
+    .byte 'A'
+    .byte 'T'
+    .byte ' '
+    .byte 'S'
+    .byte 'U'
+    .byte 'N'
+    .byte ' '
+
+.global day_num_2_name
+; Input
+; R25:R24 Target string address
+; R22 Day number
+; R20 Position in target string
+day_num_2_name:
+    PUSH ZH;
+    PUSH ZL;
+    PUSH XH;
+    PUSH XL;
+
+    ; R22 = (R22 - 1)*4
+    DEC R22;
+    LSL R22;
+    LSL R22;
+
+    ; Load table address (day_name_table + ('day number' - 1)*4
+    LDI ZH, hi8(day_table);
+    LDI ZL, lo8(day_table);
+    ADD ZL, R22;
+    ADC ZH, R1;
+
+    ; X = target string address
+    MOVW XL, R24;
+    ADD XL, R20;
+    ADC XH, R1;
+
+    ; Transfer data
+    LPM R24, Z+;
+    ST X+, R24;
+    LPM R24, Z+;
+    ST X+, R24;
+    LPM R24, Z+;
+    ST X+, R24;
+
+    POP XL;
+    POP XH;
+    POP ZL;
+    POP ZH;
+    RET;
