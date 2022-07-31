@@ -1,3 +1,7 @@
 build
 *.hex
 *.elf
+
+# KiCad backup files
+*.bak
+*-bak
