@@ -1,6 +1,6 @@
 # Documentation
 
-## Files
+## Source Files
 
 In this section an overview of the project files are given.
 The files are listed in order of relevance.
@@ -18,3 +18,8 @@ The files are listed in order of relevance.
 | `io.h`, `io.S`           | Direct control of pins. |
 | `usart.h`, `usart.S`     | Send data through USART. This is used to implement printf in `log.c` |
 | `math.S`                 | Low level math for assembly routines. |
+
+# Schematic
+In this section the schematic is shown.
+
+![](hardware/AWAC02-v01.svg)
