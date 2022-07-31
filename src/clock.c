@@ -53,9 +53,6 @@ void show_clock(uint8_t mode) {
             TWI_read(RTC_slave_address, 1, 3);
             TWI_wait();
 
-            printf("Raw %x:%x:%x\n", twi_data[2], twi_data[1], twi_data[0]);
-            printf("Mask %x:%x:%x\n", twi_data[2] & 0b111, twi_data[1], twi_data[0]);
-
             // Set hour and minute
             add_digits_to_string(display_h, twi_data[0], 3);
             add_digits_to_string(display_h, twi_data[1], 1);

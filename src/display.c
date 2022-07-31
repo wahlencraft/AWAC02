@@ -25,9 +25,11 @@ void initiate_all_displays() {
 }
 
 void set_display_osc(uint8_t on_off, uint8_t display) {
+#   ifdef LOG
     char on[] = "ON";
     char off[] = "OFF";
     log(DISPLAY, "Set display %d oscillator (%s)\n", display, (on_off) ? on : off);
+#   endif
     TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display, REG_SYS_SETUP | on_off);
 }
 
@@ -37,9 +39,11 @@ void set_all_display_osc(uint8_t on_off) {
 }
 
 void set_display(uint8_t on_off, uint8_t blink_set, uint8_t display) {
+#   ifdef LOG
     char on[] = "ON";
     char off[] = "OFF";
     log(DISPLAY, "Set display %d (%s), blink_set=%d\n", display, (on_off) ? on : off, blink_set);
+#   endif
     TWI_write_byte(DISPLAY_SLAVE_ADDRESS_START + display,
                    REG_DISP_SETUP | on_off | blink_set << 1);
 }

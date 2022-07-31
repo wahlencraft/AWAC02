@@ -19,9 +19,6 @@ int main(void){
     sei();
     TWI_init();
 
-    // Enable debug led
-    enable();
-
     sleep_ms0(1);
 
     initiate_all_displays();

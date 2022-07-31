@@ -2,7 +2,7 @@
 #define CONSTANTS_H_
 
 // Enable log
-#define LOG
+//#define LOG
 
 // Configure display
 #define DISPLAYS 2
