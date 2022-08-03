@@ -5,3 +5,4 @@ build
 # KiCad backup files
 *.bak
 *-bak
+*-backups
