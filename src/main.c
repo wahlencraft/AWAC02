@@ -10,23 +10,7 @@
 #include "flash.h"
 #include "display.h"
 #include "clock.h"
-
-#define BUTTON_BIT_POSITIONS (1<<PCINT23) | (1<<PCINT22) | (1<<PCINT21) | (1<<PCINT20)
-#define BUTTON_MASK BUTTON_BIT_POSITIONS
-#define COUNT_MARIGIN 255
-
-static volatile uint8_t pressed_buttons = 0;
-static volatile uint8_t pin_memory = 0;
-static volatile uint8_t button_filter = 0;
-
-ISR(PCINT2_vect) {
-    // Calculate pressed buttons
-    uint8_t pins = PIND;
-    pins &= BUTTON_MASK;
-    uint8_t toggled_pins = pins^pin_memory;
-    pin_memory = pins;
-    pressed_buttons = (~pins) & toggled_pins;
-}
+#include "buttons.h"
 
 int main(void){
     init_log(INFO | ERROR | WARNING | CLOCK);
@@ -47,17 +31,11 @@ int main(void){
     set_display_buffer_long_string("TESTBUTN", 8);
     write_to_all_displays();
 
-    PCICR = 1<<PCIE2;
-    PCMSK2 = BUTTON_MASK;
-    pin_memory = PIND;
-    pin_memory &= BUTTON_MASK;
+    init_buttons();
 
     uint8_t counters[4] = {0, 0, 0, 0};
     while (1) {
-        cli();
-        uint8_t pressed_buttons_buffer = pressed_buttons;
-        pressed_buttons = 0;
-        sei();
+        uint8_t pressed_buttons_buffer = extract_pressed_buttons();
         if (pressed_buttons_buffer) {
             for (uint8_t i=0; i<4; ++i) {
                 if (pressed_buttons_buffer & (1<<(i+4))) {
