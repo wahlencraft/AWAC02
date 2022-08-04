@@ -11,6 +11,7 @@
 #include "display.h"
 #include "clock.h"
 #include "buttons.h"
+#include "eeprom.h"
 
 int main(void){
     init_log(INFO | ERROR | WARNING | CLOCK);
@@ -32,6 +33,15 @@ int main(void){
     set_display_buffer_long_string("TESTBUTN", 8);
     write_to_all_displays();
 
+    char data[12];
+    for (uint8_t i=0; i<12; ++i) {
+        data[i] = EEPROM_read(i);
+    }
+    printf("EEPROM data=%s\n", data);
+    char data_new[12] = "Hello World!";
+    for (uint8_t i=0; i<12; ++i) {
+        EEPROM_write(i, data_new[i]);
+    }
 
     set_display_buffer_long_string("TEST RTC", 8);
     write_to_all_displays();
@@ -51,7 +61,7 @@ int main(void){
             }
         }
         show_clock(clock_mode);
-        sleep_ms1(100);
+        sleep_ms1(200);
     }
 
     log(INFO, "Test program finished\n");
