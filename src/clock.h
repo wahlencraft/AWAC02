@@ -10,6 +10,34 @@
 /* Start the RTC clock. If clock already running do nothing. */
 void start_clock();
 
+/* Get the clock value at address.
+ *
+ * Address | Description     | Range
+ * --------|-----------------|------
+ *    0    | Seconds         | 0-59
+ *    1    | Minutes         | 0-59
+ *    2    | Hours           | 0-23
+ *    3    | Day of the week | 1-7
+ *    4    | Day (date)      | 1-31
+ *    5    | Month           | 1-12
+ *    6    | Year            | 0-99
+ */
+uint8_t get_clock(uint8_t address);
+
+/* Set the clock value at address.
+ *
+ * Address | Description     | Range
+ * --------|-----------------|------
+ *    0    | Seconds         | 0-59
+ *    1    | Minutes         | 0-59
+ *    2    | Hours           | 0-23
+ *    3    | Day of the week | 1-7
+ *    4    | Day (date)      | 1-31
+ *    5    | Month           | 1-12
+ *    6    | Year            | 0-99
+ */
+void set_clock(uint8_t address, uint8_t value);
+
 /* Show the clock value on the display.
  *
  * Mode can be:

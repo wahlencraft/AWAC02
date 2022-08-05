@@ -24,6 +24,36 @@ void add_digits_to_string(char *str, uint8_t digits, uint8_t pos) {
     str[pos - 1] = '0' + ((digits & 0x70) >> 4);
 }
 
+uint8_t bcd_to_number(char c) {
+    return 10*((c & 0x7f) >> 4) + (c & 0x0f);
+}
+
+uint8_t number_to_bcd(uint8_t num) {
+    return ((num / 10) << 4) + (num % 10);
+}
+
+uint8_t get_clock(uint8_t address) {
+    log(CLOCK, "Get clock (0x%x)\n", address);
+    TWI_read(RTC_slave_address, address, 1);
+    TWI_wait();
+    uint8_t data = bcd_to_number(twi_data[0]);
+    return data;
+}
+
+void set_clock(uint8_t address, uint8_t value) {
+    log(CLOCK, "Set clock (0x%x = %d)\n", address, value);
+
+    uint8_t osc_status = 0;
+    if (value == 0) {
+        // Save OSC enable pin status
+        TWI_read(RTC_slave_address, 0, 1);
+        TWI_wait();
+        osc_status = twi_data[0] & 0x80;
+    }
+    uint8_t data[1] = { osc_status | number_to_bcd(value) };
+    TWI_write_bytes(RTC_slave_address, address, data, 1);
+}
+
 void show_clock(uint8_t mode) {
     char display_l[4] = "    ";
     char display_h[4] = "    ";
