@@ -1,7 +1,7 @@
 #include <avr/io.h>
+#include "constants.h"
 
-#define BUTTON_BIT_POSITIONS (1<<PCINT23) | (1<<PCINT22) | (1<<PCINT21) | (1<<PCINT20)
-#define BUTTON_MASK BUTTON_BIT_POSITIONS
+#define BUTTON_MASK (1<<BUTTON0) | (1<<BUTTON1) | (1<<BUTTON2) | (1<<BUTTON3) | (1<<RTC_INT)
 
 .data
 .comm pin_memory, 1
@@ -44,6 +44,8 @@ PCINT2_vect:
 
     PUSH R24;
     PUSH R25;
+
+    SBI PINC - 0x20, 0
 
     ; Load current pin status
     IN R24, PIND - 0x20;
