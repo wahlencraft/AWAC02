@@ -1,4 +1,4 @@
-#include "clock.h"
+#include "rtc.h"
 #include "log.h"
 #include "twi.h"
 #include "display.h"

@@ -9,8 +9,8 @@
 #include "log.h"
 #include "flash.h"
 #include "display.h"
-#include "clock.h"
-#include "buttons.h"
+#include "rtc.h"
+#include "external_interrupts.h"
 #include "eeprom.h"
 
 #include "helpers.h"
@@ -51,7 +51,7 @@ int main(void){
 
     RTC_start();
 
-    init_buttons();
+    init_external_interrupts();
 
     RTC_set(HOUR, 23);
     RTC_set(MINUTE, 59);
@@ -60,8 +60,8 @@ int main(void){
 
     uint8_t clock_mode = 0;
     while (1) {
-        uint8_t pressed_buttons_buffer = extract_pressed_buttons();
-        switch (pressed_buttons_buffer) {
+        uint8_t ext_interrupts = extract_triggered_external_interrupts();
+        switch (ext_interrupts) {
             case 0:
                 // Nothing has been pressed
                 break;
@@ -100,7 +100,7 @@ int main(void){
                     set_alarm_next(clock_mode);
                 break;
             default:
-                log(WARNING, "Unknown external interrupt: 0x%x\n", pressed_buttons_buffer);
+                log(WARNING, "Unknown external interrupt: 0x%x\n", ext_interrupts);
         }
     }
 

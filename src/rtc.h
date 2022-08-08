@@ -1,5 +1,5 @@
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef RTC_H_
+#define RTC_H_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -74,4 +74,4 @@ void RTC_set_alarm(uint8_t alarm, uint8_t address, uint8_t value);
 /* Clear ALARM0 or ALARM1. Not needed if RTC_set_alarm is called instead.*/
 void RTC_clear_alarm(uint8_t alarm);
 
-#endif  // CLOCK_H_
+#endif  // RTC_H_H

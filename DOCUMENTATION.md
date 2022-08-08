@@ -10,8 +10,9 @@ The files are listed in order of relevance.
 | `main.c`                 | The main file. |
 | `constants.h`            | Global constants for defining number of displays, enabling logging etc. |
 | `log.h`, `log.c`         | Logging functions. Everything here will be unavailable if the LOG constant is undefined. |
-| `clock.h`, `clock.c`     | High level functions to set and show the clock status. |
+| `rtc.h`, `rtc.c`         | High level functions to set and show the external RTC clock. |
 | `display.h`, `display.c` | Low level functions to interface with the Qwiic Alphanumeric Display |
+| `external_interrrupts.h`, `external_interrupts.S` | Register and extract the external interrupts (button presses and RTC alarms). |
 | `time.h`, `time.S`       | Start and use the hardware times. |
 | `twi.h`, `twi.S`         | Interface to the TWI (I2C) hardware. Read and write to external devices. |
 | `flash.h`, `flash.S`     | Low level functions to load constant data from flash. For example an ASCII conversion table. |
