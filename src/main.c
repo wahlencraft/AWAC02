@@ -12,22 +12,35 @@
 #include "rtc.h"
 #include "external_interrupts.h"
 #include "eeprom.h"
+#include "sleep.h"
 
 #include "helpers.h"
 
+extern volatile uint8_t irc_counter;
+
 /* Set RTC alarm next [mode].
  *
- * [mode] can be: SECOND, MINUTE, HOUR or DAY. */
+ * [mode] can be: SECOND, MINUTE or HOUR. */
 void set_alarm_next(uint8_t mode) {
     uint8_t value = RTC_get(mode);
-    value = (value + 1) % 60;
+    switch (mode) {
+        case SECOND:
+        case MINUTE:
+            value = (value + 1) % 60;
+            break;
+        case HOUR:
+            value = (value + 1) % 24;
+            break;
+        default:
+            log(ERROR, "set_alarm_next() unknown mode %d\n", mode);
+    }
 
     RTC_set_alarm(ALARM0, mode, value);
     RTC_enable_alarm(ALARM0);
 }
 
-int main(void){
-    init_log(INFO | ERROR | WARNING | CLOCK);
+int main(void) {
+    init_log(INFO | ERROR | WARNING | RTC);
 
     start_counter0();
     start_counter1();
@@ -56,57 +69,58 @@ int main(void){
     RTC_set(HOUR, 23);
     RTC_set(MINUTE, 59);
 
-    set_alarm_next(SECOND);
+    uint8_t clock_mode = MINUTE;
 
-    uint8_t clock_mode = 0;
-    while (1) {
-        uint8_t ext_interrupts = extract_triggered_external_interrupts();
-        switch (ext_interrupts) {
-            case 0:
-                // Nothing has been pressed
-                break;
-            case 1<<BUTTON0:
-                log(INFO, "Button 0 has been pressed\n");
-                clock_mode = 0;
-                RTC_show(clock_mode);
+    goto enter_clock_mode;
 
-                set_alarm_next(SECOND);
-                break;
-            case 1<<BUTTON1:
-                log(INFO, "Button 1 has been pressed\n");
-                clock_mode = 1;
-                RTC_show(clock_mode);
+/*=============================================================================
+ * CLOCK MODE
+ *===========================================================================*/
 
-                set_alarm_next(MINUTE);
-                break;
-            case 1<<BUTTON2:
-                log(INFO, "Button 2 has been pressed\n");
-                clock_mode = 2;
-                RTC_show(clock_mode);
+enter_clock_mode:
+    log(INFO, "Enter clock mode\n");
+    clock_mode = MINUTE;
+    goto clock_mode_show;
 
-                set_alarm_next(DAY);
-                break;
-            case 1<<BUTTON3:
-                log(INFO, "Button 3 has been pressed\n");
-                clock_mode = 3;
-                RTC_show(clock_mode);
-                break;
-            case 1<<RTC_INT:
-                log(INFO, "RTC interrupt received\n");
-
-                RTC_disable_alarm(ALARM0);
-                RTC_show(clock_mode);
-                if (clock_mode != 3)
-                    set_alarm_next(clock_mode);
-                break;
-            default:
-                log(WARNING, "Unknown external interrupt: 0x%x\n", ext_interrupts);
-        }
+clock_mode_check_interrupts:
+    uint8_t interrupts = extract_external_interrupts();
+    log(INFO, "Clock mode: check interrupt (0x%x)\n", interrupts);
+    if (interrupts & (1<<RTC_INT)) {
+        //RTC_clear_alarm(ALARM0);
+        goto clock_mode_show;
     }
+    if (interrupts & (1<<BUTTON_SP))
+        goto clock_mode_increment;
+    if (interrupts & ((1<<BUTTON_L) | (1<<BUTTON_R)))
+        goto enter_menu_mode;
+    goto clock_mode_wfi;
 
-    log(INFO, "Test program finished\n");
-    while(1);
+clock_mode_show:
+    RTC_show(clock_mode);
+    log(INFO, "Clock mode: show\n");
+    goto clock_mode_wfi;
 
-    return 0;
+clock_mode_increment:
+    log(INFO, "Clock mode: increment\n");
+    clock_mode = (clock_mode + 1) % 3;
+    goto clock_mode_show;
+
+clock_mode_wfi:
+    set_alarm_next(clock_mode);
+    log(INFO, "Clock mode: WFI\n");
+    TWI_wait();
+    sleep_until_interrupt();
+    goto clock_mode_check_interrupts;
+
+/*=============================================================================
+ * MENU MODE
+ *===========================================================================*/
+
+enter_menu_mode:
+    set_display_buffer_long_string("MENUTODO", 8);
+    write_to_all_displays();
+    log(INFO, "Enter menu mode\n");
+
+    while (1);
 }
 

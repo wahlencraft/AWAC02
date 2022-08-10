@@ -12,7 +12,7 @@ uint8_t log_levels = 0;
         static char error[]   = KRED"ERROR";
         static char warning[] = KYEL"WARN";
         static char display[] = "DISP";
-        static char clock[] = "CLOCK";
+        static char rtc[] = "RTC";
         char *label = info;
         switch (lvl) {
             case INFO:
@@ -27,8 +27,8 @@ uint8_t log_levels = 0;
             case DISPLAY:
                 label = display;
                 break;
-            case CLOCK:
-                label = clock;
+            case RTC:
+                label = rtc;
             default:
                 break;
         }

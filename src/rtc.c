@@ -18,11 +18,11 @@
 static uint8_t RTC_ALARM_OFFSETS[2] = { RTC_ALARM0_OFFSET, RTC_ALARM1_OFFSET };
 
 void RTC_start() {
-    //log(CLOCK, "Start RTC\n");
+    log(RTC, "Start RTC\n");
     TWI_read(RTC_SLAVE_ADDRESS, 0, 1);
     TWI_wait();
     if (twi_data[0] & 0x80) {
-        //log(CLOCK, "RTC already running\n");
+        log(RTC, "RTC already running\n");
     } else {
         uint8_t data[1] = { twi_data[0] | 0x80 };
         TWI_write_bytes(RTC_SLAVE_ADDRESS, 0, data, 1);
@@ -36,7 +36,7 @@ void add_digits_to_string(char *str, uint8_t digits, uint8_t pos) {
 }
 
 uint8_t RTC_get(uint8_t address) {
-    //log(CLOCK, "Get clock (0x%x)\n", address);
+    //log(RTC, "Get clock (0x%x)\n", address);
     TWI_read(RTC_SLAVE_ADDRESS, address, 1);
     TWI_wait();
     uint8_t data = bcd_to_number(twi_data[0]);
@@ -44,7 +44,7 @@ uint8_t RTC_get(uint8_t address) {
 }
 
 void RTC_set(uint8_t address, uint8_t value) {
-    //log(CLOCK, "Set clock (0x%x = %d)\n", address, value);
+    //log(RTC, "Set clock (0x%x = %d)\n", address, value);
 
     uint8_t osc_status = 0;
     if (value == 0) {
@@ -63,7 +63,7 @@ void RTC_show(uint8_t mode) {
     char display_long[8] = "        ";
     switch (mode) {
         case HOUR_MIN_SEC:
-            log(CLOCK, "Show HOUR_MIN_SEC\n");
+            log(RTC, "Show HOUR_MIN_SEC\n");
 
             // Read time
             TWI_read(RTC_SLAVE_ADDRESS, 0, 3);
@@ -80,7 +80,7 @@ void RTC_show(uint8_t mode) {
             write_to_all_displays();
             break;
         case DOTW_HOUR_MIN:
-            log(CLOCK, "Show DOTW_HOUR_MIN\n");
+            log(RTC, "Show DOTW_HOUR_MIN\n");
 
             // Read time
             TWI_read(RTC_SLAVE_ADDRESS, 1, 3);
@@ -100,7 +100,7 @@ void RTC_show(uint8_t mode) {
             write_to_all_displays();
             break;
         case YEAR_MON_DAY:
-            log(CLOCK, "Show YEAR_MON_DAY\n");
+            log(RTC, "Show YEAR_MON_DAY\n");
 
             // Read time
             TWI_read(RTC_SLAVE_ADDRESS, 4, 3);
@@ -125,7 +125,7 @@ void RTC_show(uint8_t mode) {
 }
 
 void RTC_enable_alarm(uint8_t alarm) {
-    log(CLOCK, "Enable RTC alarm %d\n", alarm);
+    log(RTC, "Enable RTC alarm %d\n", alarm);
     TWI_read(RTC_SLAVE_ADDRESS, RTC_control_reg, 1);
     TWI_wait();
     uint8_t ctrl = twi_data[0];
@@ -135,7 +135,7 @@ void RTC_enable_alarm(uint8_t alarm) {
 }
 
 void RTC_disable_alarm(uint8_t alarm) {
-    log(CLOCK, "Disable RTC alarm %d\n", alarm);
+    log(RTC, "Disable RTC alarm %d\n", alarm);
     TWI_read(RTC_SLAVE_ADDRESS, RTC_control_reg, 1);
     TWI_wait();
     uint8_t ctrl = twi_data[0];
@@ -145,7 +145,7 @@ void RTC_disable_alarm(uint8_t alarm) {
 }
 
 void RTC_set_alarm(uint8_t alarm, uint8_t address, uint8_t value) {
-    log(CLOCK, "Set RTC alarm %d:%x = %d\n", alarm, address, value);
+    log(RTC, "Set RTC alarm %d:%x = %d\n", alarm, address, value);
 
     uint8_t rtc_data[6] = {0, 0, 0, 0, 0, 0};
     rtc_data[address] = number_to_bcd(value);
@@ -154,7 +154,7 @@ void RTC_set_alarm(uint8_t alarm, uint8_t address, uint8_t value) {
 }
 
 void RTC_clear_alarm(uint8_t alarm) {
-    log(CLOCK, "Clear RTC alarm %d\n", alarm);
+    log(RTC, "Clear RTC alarm %d\n", alarm);
     TWI_read(RTC_SLAVE_ADDRESS, RTC_ALARM_OFFSETS[alarm] + 3, 1);
     TWI_wait();
     uint8_t data[1] = { twi_data[0] & ~(1<<3)};

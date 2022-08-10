@@ -10,11 +10,10 @@
 
 // External interrupts (buttons etc)
 // Note, must be from PORTD (PCINT16 - PCINT23)
-#define BUTTON0 PCINT20
-#define BUTTON1 PCINT21
-#define BUTTON2 PCINT22
-#define BUTTON3 PCINT23
-#define RTC_INT PCINT19
+#define BUTTON_SP PCINT23
+#define BUTTON_L PCINT22
+#define BUTTON_R PCINT21
+#define RTC_INT PCINT20
 
 #endif  // CONSTANTS_H_
 

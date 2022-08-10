@@ -23,7 +23,7 @@
 #define WARNING 1<<2
 #define DISPLAY 1<<3
 #define TWI 1<<4
-#define CLOCK 1<<5
+#define RTC 1<<5
 
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"

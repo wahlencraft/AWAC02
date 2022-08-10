@@ -1,11 +1,15 @@
 #include <avr/io.h>
 #include "constants.h"
 
-#define INTERRUPT_MASK (1<<BUTTON0) | (1<<BUTTON1) | (1<<BUTTON2) | (1<<BUTTON3) | (1<<RTC_INT)
+//#define INTERRUPT_MASK (1<<BUTTON_SP) | (1<<BUTTON_U) | (1<<BUTTON_L) | (1<<BUTTON_R) | (1<<BUTTON_D) | (1<<RTC_INT)
+//#define INTERRUPT_MASK (1<<BUTTON_SP) | (1<<BUTTON_L) | (1<<BUTTON_R) | (1<<RTC_INT)
+#define INTERRUPT_MASK 0xf0
 
 .data
 .comm pin_memory, 1
 .comm triggered_interrupts, 1
+.comm irc_counter, 1
+.global irc_counter
 
 .text
 
@@ -45,6 +49,10 @@ PCINT2_vect:
 
     SBI PINC - 0x20, 0
 
+    LDS R24, irc_counter;
+    INC R24;
+    STS irc_counter, R24;
+
     ; Load current pin status
     IN R24, PIND - 0x20;
     ANDI R24, INTERRUPT_MASK;
@@ -75,8 +83,8 @@ PCINT2_vect:
 
     RETI;
 
-.global extract_triggered_external_interrupts
-extract_triggered_external_interrupts:
+.global extract_external_interrupts
+extract_external_interrupts:
     CLI;
     LDS R24, triggered_interrupts;
     STS triggered_interrupts, R1;
