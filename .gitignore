@@ -3,6 +3,15 @@ build
 *.elf
 
 # KiCad backup files
-*.bak
-*-bak
-*-backups
+hardware/*.bak
+hardware/*-bak
+hardware/*-backups
+hardware/*auto_saved_files*
+
+# LaTeX
+documentation/*.pdf
+documentation/*.log
+documentation/*.aux
+documentation/*.fls
+documentation/*.fdb_latexmk
+documentation/*.synctex.gz

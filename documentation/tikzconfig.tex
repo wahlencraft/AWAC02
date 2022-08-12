@@ -1,0 +1,25 @@
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, backgrounds, shapes, arrows}
+
+\tikzstyle{start} = [rectangle, rounded corners, minimum width=3cm, text centered,
+ draw=black, fill=red!30, inner sep=1em]
+
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, 
+ minimum height=1cm, text centered, draw=black, fill=blue!30, trapezium stretches=true,
+ align=center, inner sep=1em] 
+
+\tikzstyle{state} = [rectangle, minimum height=1cm, align=center,
+      draw=black, fill=orange!30, inner sep=1em]
+
+\tikzstyle{decision} = [ellipse, minimum width=3cm, minimum height=1cm, text centered, draw=black,
+ fill=green!30, inner sep=.5em]
+
+\tikzstyle{subprocess} = [rectangle, draw = black!50, minimum height = 2em, fill=pink!50]
+
+\tikzstyle{process2} = [rectangle, minimum height=1cm, align=center, draw=black, fill=yellow!30, inner sep=1.8em]
+
+\tikzstyle{process_label} = [external/.style={draw=black!50}, font={\fontsize{13pt}{12}\selectfont}]
+
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{slow_arrow} = [dotted, thick,->,>=stealth]
+\tikzstyle{line} = [thick]

@@ -1,0 +1,82 @@
+\documentclass{awac02}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{svg}
+\input{tikzconfig}
+
+\title{Documentation}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+The documentation is meant as a guide for the developer. Additional aid is
+found in the source header files where most functions are documented.
+
+\section{Source Files}
+
+In this section an overview of the project files are given.
+The files are listed in order of relevance.
+
+\begin{centering}
+\vspace{3mm}
+\begin{tabularx}{.9\textwidth}{ >\raggedright p{5cm} | X }
+    File(s)                  & Description \\ [0.5ex]
+    \hline
+    \texttt{main.c}                     & The main file. Contains the
+                                          state-machinde.\\
+    \texttt{constants.h}                & Global constants for defining number
+                                          of displays, enabling logging etc. \\
+    \texttt{log.h}, \texttt{log.c}      & Logging functions. Everything here
+                                          will be unavailable if the LOG
+                                          constant is undefined. \\
+    \texttt{rtc.h}, \texttt{rtc.c}      & High level functions to set and show
+                                          the external RTC clock. \\
+    \texttt{display.h}, \texttt{display.c} & Low level functions to interface
+                                             with the Qwiic Alphanumeric Display \\
+    \texttt{helpers.h}, \texttt{helpers.c} & Simple helper-functions. \\
+    \texttt{external\_interrrupts.h}, \texttt{external\_interrupts.S} & 
+                    Register and extract the external interrupts (button
+                    presses and RTC alarms). \\
+    \texttt{time.h}, \texttt{time.S}    & Start and use the hardware times. \\
+    \texttt{sleep.h}, \texttt{sleep.S}  & Set the processor sleep state. \\
+    \texttt{twi.h}, \texttt{twi.S}      & Interface to the TWI (I2C) hardware.
+                                          Read and write to external devices. \\
+    \texttt{eeprom.h}, \texttt{eeprom.S} & Read and write to the EEPROM
+                                           (non-volatile storage). \\
+    \texttt{flash.h}, \texttt{flash.S}  & Read constant data from flash. For
+                                          example an ASCII conversion table. \\
+    \texttt{io.h}, \texttt{io.S}        & Direct control of pins. \\
+    \texttt{usart.h}, \texttt{usart.S}  & Send data through USART. This is used
+                                          to implement printf in `log.c` \\
+    \texttt{math.S}                     & Low level math for assembly routines.
+\end{tabularx}
+\end{centering}
+
+\section{Schematic}
+
+In figure \ref{fig:schematic} the schematics is shown. The schematic is found
+seperatly in the \texttt{hardware} directory.
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{../hardware/AWAC02-v01}
+    \label{fig:schematic}
+\end{figure}
+
+\section{State Machine}
+
+The state machine is in \texttt{main.c}. It is implemented using the
+\texttt{goto} statement which can lead to hard to understand code. To make
+development of the state machine easier all states are documented here and
+shown in a flow-chart. The program starts in the \texttt{enter\_clock\_mode}
+state.
+
+\vspace{5mm}
+\input{clock-state}
+
+\end{document}
