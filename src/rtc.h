@@ -50,14 +50,6 @@ uint8_t RTC_get(uint8_t address);
  */
 void RTC_set(uint8_t address, uint8_t value);
 
-/* Show the clock value on the display.
- *
- * Mode can be:
- *  HOUR_MIN_SEC  -> __HH MM:SS
- *  DOTW_HOUR_MIN -> DDD_ HH:MM
- *  YEAR_MON_DAY  -> 20YY MM:DD */
-void RTC_show(uint8_t mode);
-
 /* Enable ALARM0 or ALARM1 */
 void RTC_enable_alarm(uint8_t alarm);
 

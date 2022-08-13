@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{awac}[2022/08/11 The class for AWAC documents]
+\ProvidesClass{awac02}[2022/08/11 The class for AWAC documents]
 
 \LoadClass{article}
 

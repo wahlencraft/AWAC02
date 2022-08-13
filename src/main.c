@@ -13,8 +13,8 @@
 #include "external_interrupts.h"
 #include "eeprom.h"
 #include "sleep.h"
-
-#include "helpers.h"
+#include "menu.h"
+#include "utilities.h"
 
 extern volatile uint8_t irc_counter;
 
@@ -69,6 +69,8 @@ int main(void) {
     RTC_set(HOUR, 23);
     RTC_set(MINUTE, 59);
 
+    restore_display_brightness();
+
     uint8_t clock_mode = MINUTE;
 
     goto enter_clock_mode;
@@ -96,7 +98,7 @@ clock_mode_check_interrupts:
     goto clock_mode_wfi;
 
 clock_mode_show:
-    RTC_show(clock_mode);
+    show_time(clock_mode);
     log(INFO, "Clock mode: show\n");
     goto clock_mode_wfi;
 
@@ -120,7 +122,8 @@ enter_menu_mode:
     set_display_buffer_long_string("MENUTODO", 8);
     write_to_all_displays();
     log(INFO, "Enter menu mode\n");
+    menu();
 
-    while (1);
+    goto enter_clock_mode;
 }
 

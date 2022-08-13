@@ -181,12 +181,12 @@ day_table:
     .byte 'N'
     .byte ' '
 
-.global day_num_2_name
+.global add_dotw_to_string
 ; Input
 ; R25:R24 Target string address
 ; R22 Day number
 ; R20 Position in target string
-day_num_2_name:
+add_dotw_to_string:
     PUSH ZH;
     PUSH ZL;
     PUSH XH;

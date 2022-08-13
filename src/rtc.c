@@ -10,11 +10,6 @@
 
 #include "time.h"
 
-#define RTC_SLAVE_ADDRESS 0b1101111
-#define RTC_control_reg 0x07
-#define RTC_ALARM0_OFFSET 0x0a
-#define RTC_ALARM1_OFFSET 0x11
-
 static uint8_t RTC_ALARM_OFFSETS[2] = { RTC_ALARM0_OFFSET, RTC_ALARM1_OFFSET };
 
 void RTC_start() {
@@ -29,14 +24,8 @@ void RTC_start() {
     }
 }
 
-void add_digits_to_string(char *str, uint8_t digits, uint8_t pos) {
-    // digits is BCD and should first be converted to ASCII
-    str[pos] = '0' + (digits & 0x0f);
-    str[pos - 1] = '0' + ((digits & 0x70) >> 4);
-}
-
 uint8_t RTC_get(uint8_t address) {
-    //log(RTC, "Get clock (0x%x)\n", address);
+    log(RTC, "Get clock (0x%x)\n", address);
     TWI_read(RTC_SLAVE_ADDRESS, address, 1);
     TWI_wait();
     uint8_t data = bcd_to_number(twi_data[0]);
@@ -44,7 +33,7 @@ uint8_t RTC_get(uint8_t address) {
 }
 
 void RTC_set(uint8_t address, uint8_t value) {
-    //log(RTC, "Set clock (0x%x = %d)\n", address, value);
+    log(RTC, "Set clock (0x%x = %d)\n", address, value);
 
     uint8_t osc_status = 0;
     if (value == 0) {
@@ -55,73 +44,6 @@ void RTC_set(uint8_t address, uint8_t value) {
     }
     uint8_t data[1] = { osc_status | number_to_bcd(value) };
     TWI_write_bytes(RTC_SLAVE_ADDRESS, address, data, 1);
-}
-
-void RTC_show(uint8_t mode) {
-    char display_l[4] = "    ";
-    char display_h[4] = "    ";
-    char display_long[8] = "        ";
-    switch (mode) {
-        case HOUR_MIN_SEC:
-            log(RTC, "Show HOUR_MIN_SEC\n");
-
-            // Read time
-            TWI_read(RTC_SLAVE_ADDRESS, 0, 3);
-            TWI_wait();
-
-            add_digits_to_string(display_long, twi_data[0], 7);
-            add_digits_to_string(display_long, twi_data[1], 5);
-            add_digits_to_string(display_long, twi_data[2], 3);
-
-            // Write
-            set_display_buffer_long_string(display_long, 8);
-            add_colon_to_display_buffer(1);
-
-            write_to_all_displays();
-            break;
-        case DOTW_HOUR_MIN:
-            log(RTC, "Show DOTW_HOUR_MIN\n");
-
-            // Read time
-            TWI_read(RTC_SLAVE_ADDRESS, 1, 3);
-            TWI_wait();
-
-            // Set hour and minute
-            add_digits_to_string(display_h, twi_data[0], 3);
-            add_digits_to_string(display_h, twi_data[1], 1);
-            set_display_buffer_string(display_h, 1);
-            add_colon_to_display_buffer(1);
-
-            // Set day of the week
-            uint8_t day_num = twi_data[2] & 0b111;
-            day_num_2_name(display_l, day_num, 0);
-            set_display_buffer_string(display_l, 0);
-
-            write_to_all_displays();
-            break;
-        case YEAR_MON_DAY:
-            log(RTC, "Show YEAR_MON_DAY\n");
-
-            // Read time
-            TWI_read(RTC_SLAVE_ADDRESS, 4, 3);
-            TWI_wait();
-
-            // First two digits always 20
-            display_long[0] = '2';
-            display_long[1] = '0';
-
-            // Set year, month and day
-            add_digits_to_string(display_long, twi_data[0], 7);
-            add_digits_to_string(display_long, twi_data[1], 5);
-            add_digits_to_string(display_long, twi_data[2], 3);
-
-            set_display_buffer_long_string(display_long, 8);
-            add_colon_to_display_buffer(1);
-            write_to_all_displays();
-            break;
-        default:
-            log(ERROR, "Mode %d does not exist\n", mode);
-    }
 }
 
 void RTC_enable_alarm(uint8_t alarm) {

@@ -7,6 +7,10 @@
 #ifndef EEPROM_H_
 #define EEPROM_H_
 
+#define EEPROM_UNINITIALIZED 0xff
+
+#define EEPROM_ADDR_DISPLAY_BRIGHTNESS 0
+
 /* Write one byte to EEPROM.
  *
  * Note, this is very slow (typicaly 3.3 ms). */

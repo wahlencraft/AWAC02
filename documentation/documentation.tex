@@ -29,9 +29,12 @@ The files are listed in order of relevance.
     File(s)                  & Description \\ [0.5ex]
     \hline
     \texttt{main.c}                     & The main file. Contains the
-                                          state-machinde.\\
+                                          clock-mode state-machinde.\\
     \texttt{constants.h}                & Global constants for defining number
                                           of displays, enabling logging etc. \\
+    \texttt{menu.h}, \texttt{menu.c}    & The state machine for the menu. \\
+    \texttt{utilities.h}, \texttt{utilities.c} & High level utilities. Mostly
+                    for applying and showing settings. \\
     \texttt{log.h}, \texttt{log.c}      & Logging functions. Everything here
                                           will be unavailable if the LOG
                                           constant is undefined. \\
