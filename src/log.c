@@ -1,5 +1,10 @@
 #include "log.h"
 
+#ifdef LOG
+#   include "flash.h"
+#   include "rtc.h"
+#endif
+
 uint8_t log_levels = 0;
 
 #ifdef LOG
@@ -13,6 +18,7 @@ uint8_t log_levels = 0;
         static char warning[] = KYEL"WARN";
         static char display[] = "DISP";
         static char rtc[] = "RTC";
+        static char state[] = "STATE";
         char *label = info;
         switch (lvl) {
             case INFO:
@@ -29,6 +35,10 @@ uint8_t log_levels = 0;
                 break;
             case RTC:
                 label = rtc;
+                break;
+            case STATE:
+                label = state;
+                break;
             default:
                 break;
         }
@@ -58,4 +68,17 @@ void log_twi_status_codes() {
         printf("\n");
     }
 #endif
+}
+
+
+void log_time() {
+#   ifdef LOG
+        if (log_levels & RTC) {
+            uint8_t time[7];
+            RTC_get_all(time);
+            char dotw[4] = "   \0";
+            add_dotw_to_string(dotw, time[3], 0);
+            printf("RTC time is: %s 20%02d-%02d-%02d %02d:%02d:%02d\n", dotw, time[6], time[5], time[4], time[2], time[1], time[0]);
+        }
+#   endif
 }

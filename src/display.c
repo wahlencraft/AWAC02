@@ -125,6 +125,27 @@ void set_display_buffer_string(char *str, uint8_t display) {
     add_char_to_display_buffer(str[3], 3, display);
 }
 
+void set_display_buffer_number(uint16_t number, uint8_t display) {
+    clear_display_buffer(display);
+    char digits[4] = {0, 0, 0, 0};
+
+    digits[3] = number / 1000;
+    digits[2] = (number / 100) % 10;
+    digits[1] = (number / 10) % 10;
+    digits[0] = (number / 1) % 10;
+
+    for (uint8_t i=0; i<4; ++i) {
+        uint8_t sum = 0;
+        for (uint8_t j=i; j<4; ++j)
+            sum+=digits[j];
+        if ((sum > 0) || (i == 0))
+            add_char_to_display_buffer(digits[i] + '0', 3 - i, display);
+        else
+            break;
+    }
+
+}
+
 void set_display_buffer_long_string(char *str, uint8_t len) {
     for (uint8_t i=0; i < (len - 1)/4 + 1; ++i) {
         clear_display_buffer(i);

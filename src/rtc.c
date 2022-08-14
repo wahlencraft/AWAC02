@@ -24,19 +24,51 @@ void RTC_start() {
     }
 }
 
+void RTC_stop() {
+    log(RTC, "Stop RTC\n");
+    TWI_read(RTC_SLAVE_ADDRESS, 0, 1);
+    TWI_wait();
+    if (twi_data[0] & 0x80) {
+        uint8_t data[1] = { twi_data[0] & 0x7f };
+        TWI_write_bytes(RTC_SLAVE_ADDRESS, 0, data, 1);
+    } else {
+        log(RTC, "RTC already stopped\n");
+    }
+}
+
 uint8_t RTC_get(uint8_t address) {
-    log(RTC, "Get clock (0x%x)\n", address);
+    log(RTC, "RTC get (0x%x)\n", address);
     TWI_read(RTC_SLAVE_ADDRESS, address, 1);
     TWI_wait();
-    uint8_t data = bcd_to_number(twi_data[0]);
-    return data;
+    if (DOTW == address)
+        return bcd_to_number(twi_data[0] & 0x7);
+    else if (YEAR == address)
+        return bcd_to_number(twi_data[0] & 0xff);
+    else
+        return bcd_to_number(twi_data[0] & 0x7f);
+}
+
+void RTC_get_all(uint8_t *value_list) {
+    log(RTC, "RTC get all\n");
+    TWI_read(RTC_SLAVE_ADDRESS, SECOND, 7);
+    TWI_wait();
+    for (uint8_t i=SECOND; i<=YEAR; ++i) {
+        uint8_t mask;
+        if (i == DOTW)
+            mask = 0x7;
+        else if (i == YEAR)
+            mask = 0xff;
+        else
+            mask = 0x7f;
+        value_list[i] = bcd_to_number(twi_data[i] & mask);
+    }
 }
 
 void RTC_set(uint8_t address, uint8_t value) {
-    log(RTC, "Set clock (0x%x = %d)\n", address, value);
+    log(RTC, "RTC set (0x%x = %d)\n", address, value);
 
     uint8_t osc_status = 0;
-    if (value == 0) {
+    if (address == SECOND) {
         // Save OSC enable pin status
         TWI_read(RTC_SLAVE_ADDRESS, 0, 1);
         TWI_wait();
@@ -44,6 +76,12 @@ void RTC_set(uint8_t address, uint8_t value) {
     }
     uint8_t data[1] = { osc_status | number_to_bcd(value) };
     TWI_write_bytes(RTC_SLAVE_ADDRESS, address, data, 1);
+}
+
+void RTC_set_second_and_start(uint8_t value) {
+    log(RTC, "Set second=%d and start osc.\n", value);
+    uint8_t data[1] = { 0x80 | number_to_bcd(value) };
+    TWI_write_bytes(RTC_SLAVE_ADDRESS, SECOND, data, 1);
 }
 
 void RTC_enable_alarm(uint8_t alarm) {

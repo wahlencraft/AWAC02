@@ -79,6 +79,9 @@ void add_decimal_to_display_buffer(uint8_t display);
  */
 void set_display_buffer_string(char *str, uint8_t display);
 
+/* Update the display buffer with a number (4 digit). */
+void set_display_buffer_number(uint16_t number, uint8_t display);
+
 /* Update the display buffers with a new string.
  *
  * The message starts on display 0 and overflows into additional displays.

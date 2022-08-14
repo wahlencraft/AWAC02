@@ -23,6 +23,9 @@
 /* Start the RTC clock. If clock already running do nothing. */
 void RTC_start();
 
+/* Stop the RTC clock. If clock not running do nothing. */
+void RTC_stop();
+
 /* Get the clock value at address.
  *
  * Address                | Range
@@ -35,6 +38,8 @@ void RTC_start();
  * YEAR                   | 0-99
  */
 uint8_t RTC_get(uint8_t address);
+
+void RTC_get_all(uint8_t *value_list);
 
 /* Set the clock value at address.
  *
@@ -49,6 +54,14 @@ uint8_t RTC_get(uint8_t address);
  * YEAR                   | 0-99
  */
 void RTC_set(uint8_t address, uint8_t value);
+
+/* Set RTC second and start the oscillator.
+ *
+ * Normaly when setting second (using RTC_set(SECOND)) the oscillator enable
+ * bit needs to be read first to preserve RTC running status (because it is
+ * stored the same byte as SECOND). Whith this function that check is skipped
+ * and the oscillator is always enabled. */
+ void RTC_set_second_and_start(uint8_t value);
 
 /* Enable ALARM0 or ALARM1 */
 void RTC_enable_alarm(uint8_t alarm);
