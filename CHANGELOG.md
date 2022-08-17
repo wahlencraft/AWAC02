@@ -3,7 +3,14 @@
 ## Unreleased
 ### Added
 - Button input
-- EEPROM read/write
+- EEPROM read/write (non-volatile storage)
+- Clock mode, show the time in one of three formats:
+    - `  HH MM:SS`
+    - `DDD  HH:MM`
+    - `20YY MM:DD`
+- Menu mode:
+    - Set display brightness
+    - Set clock
 
 ## [0.1.0] -- 2022-07-31
 ### Added
