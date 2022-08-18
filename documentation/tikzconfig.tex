@@ -1,5 +1,8 @@
 \usepackage{tikz}
-\usetikzlibrary{positioning, fit, backgrounds, shapes, arrows}
+\usepackage{xparse}
+\usetikzlibrary{positioning, fit, backgrounds, shapes, arrows.meta}
+
+% State machine
 
 \tikzstyle{start} = [rectangle, rounded corners, minimum width=3cm, text centered,
  draw=black, fill=red!30, inner sep=1em]
@@ -23,3 +26,68 @@
 \tikzstyle{arrow} = [thick,->,>=stealth]
 \tikzstyle{slow_arrow} = [dotted, thick,->,>=stealth]
 \tikzstyle{line} = [thick]
+
+\NewDocumentCommand\StateWithBullets{m m m >{\SplitList{;}}m}{%
+    \node (#1) [state, text width=6cm, #2, inner sep=5pt] {\large #3\small \begin{itemize}
+    \ProcessList{#4}{\insertitem} \end{itemize}};
+}
+\newcommand\insertitem[1]{\item #1}
+
+\NewDocumentCommand\JustBullets{m m >{\SplitList{;}}m}{%
+    \node (#1) [state, text width=3.5cm, #2, inner sep=5pt, rounded corners,
+    fill=blue!30] {\vspace{-0.8em}\small\begin{itemize}
+    \ProcessList{#3}{\insertitem} \end{itemize}};
+}
+
+% Distances
+\newcommand{\shortarrowlength}{3.1em}
+
+% Menu
+\tikzstyle{menu-base} = [text centered, draw=black, inner sep=0.5em, node
+distance=4em, minimum height=3em, minimum width=9em]
+
+\tikzstyle{menu-enterexit} = [menu-base, rectangle, rounded corners, fill=black!10]
+
+\tikzstyle{menu-item} = [menu-base, rectangle, rounded corners, minimum height=3.5em]
+
+\tikzstyle{menu-small-item} = [menu-base, rectangle, rounded corners, minimum
+width=4em, minimum height=2em]
+
+\tikzstyle{menu-setting} = [menu-base, rectangle, rounded corners, minimum
+width=7em]
+
+\tikzstyle{button-label} = [circle, draw=black, minimum size=1.3em, fill=white, inner
+sep=0, line width=0.5pt, font=\footnotesize]
+
+\tikzstyle{menu-single} = [->, >={Latex[length=2mm, width=3mm]}, line width=4pt]
+\tikzstyle{menu-double} = [menu-single, <->]
+
+\newcommand{\LRvert}[2]{%
+    \draw[menu-single] ([xshift=1em]#1.south) -- node[button-label] {R}
+        ([xshift=1em]#2.north);
+    \draw[menu-single] ([xshift=-1em]#2.north) -- node[button-label] {L}
+        ([xshift=-1em]#1.south);
+}
+
+\newcommand{\LRhor}[2]{%
+    \draw[menu-single] ([yshift=0.5em]#1.east) -- node[button-label] {R}
+        ([yshift=0.5em]#2.west);
+    \draw[menu-single] ([yshift=-0.5em]#2.west) -- node[button-label] {L}
+        ([yshift=-0.5em]#1.east);
+}
+
+\newcommand{\IncrementDecrementNode}[2]{%
+    \node (_#2anchor) [#1=\shortarrowlength+1.3em of #2, outer sep=1pt, inner sep=0] {};
+    \node (_#2L) [button-label, above left=0.2em of _#2anchor] {L};
+    \node (_#2dec) [below left=0.2em of _#2anchor, inner sep=0, circle, minimum size=1.3em] {--};
+    \node (_#2R) [button-label, above right=0.2em of _#2anchor] {R};
+    \node (_#2inc) [below right=0.2em of _#2anchor, inner sep=0, circle, minimum size=1.3em] {+};
+    \node (_#2set) [fit={(_#2L) (_#2R) (_#2dec) (_#2inc)}, draw] {};
+}
+
+\newcommand{\SetTimeNode}[3]{%
+    \node (#1) [#2, menu-small-item] {#3};
+    \IncrementDecrementNode{below}{#1}
+    \draw[menu-double] (#1) -- node[button-label] {SP} (_#1set.north);
+}
+

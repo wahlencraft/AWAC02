@@ -12,6 +12,9 @@
     - Set display brightness
     - Set clock
 
+### Changed
+- The documentation is now written in LaTeX
+
 ## [0.1.0] -- 2022-07-31
 ### Added
 - Show hours minutes and seconds since power-on.

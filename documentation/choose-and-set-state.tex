@@ -1,0 +1,46 @@
+\begin{tikzpicture}[every node/.style={scale=1}]
+
+
+\StateWithBullets{CHOOSE}{draw}{Choose state}{Set left display (show type);Set
+    right display (show value);Arm
+RTC alarm for value change}
+
+\JustBullets{RTC1}{above=of CHOOSE}{Arm RTC alarm; Update right display}
+
+\JustBullets{SET_DONE}{below=of CHOOSE, xshift=4em}{Disable display blink mode}
+
+\StateWithBullets{SET}{below=3 of CHOOSE}{Set state}{Set right display blink mode}
+
+\node (PREVIOUS) [left=of CHOOSE] {Previous choose state};
+\node (NEXT) [right=of CHOOSE] {Next choose state};
+
+\JustBullets{DEC}{left=of SET}{Decrement value;Set right display}
+\JustBullets{INC}{right=of SET}{Increment value;Set right display}
+%\node (INC) [right=of SET, text width=8em] {Increment value, \\ Set right display};
+
+\JustBullets{RTC2}{below=of SET}{Arm RTC alarm; Update right display}
+
+% Arrows
+\draw[arrow] (CHOOSE) -- node[anchor=south] {\texttt{L}} (PREVIOUS);
+\draw[arrow] (CHOOSE) -- node[anchor=south] {\texttt{R}} (NEXT);
+\draw[arrow] (CHOOSE) -- node[anchor=east] {\texttt{RTC}} (RTC1);
+
+\draw[arrow] ([xshift=-4em]CHOOSE.south) -- node[anchor=east] {\texttt{SP}}
+    ([xshift=-4em]SET.north);
+
+\draw[arrow] ([xshift=4em]SET.north) -- node[anchor=east] {\texttt{SP}}
+    (SET_DONE.south);
+\draw[arrow] (SET_DONE.north) -- ([xshift=4em]CHOOSE.south);
+
+\draw[arrow] (SET) -- node[anchor=south] {\texttt{L}} (DEC);
+\draw[arrow] (SET) -- node[anchor=south] {\texttt{R}} (INC);
+\draw[arrow] (SET) -- node[anchor=east] {\texttt{RTC}} (RTC2);
+
+%\node (TESTNODE) [draw, text width=3cm] {Hejsvejs \newline $\bullet$ title};
+
+%\node [font=\Large] (top)    at (5,10) {Choose state};
+%\node [font=\Large] (middle) at (5,9)  {$\bullet$ [1]};
+%\node [font=\Large] (bottom) at (5,8)  {$\bullet$ [2]};
+%\node[draw=brown, thick,fit={(top) (middle) (bottom)}, inner sep=10pt]   (box) {};
+
+\end{tikzpicture}

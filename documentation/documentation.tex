@@ -8,7 +8,6 @@
 \input{tikzconfig}
 
 \title{Documentation}
-
 \begin{document}
 
 \maketitle
@@ -73,13 +72,58 @@ seperatly in the \texttt{hardware} directory.
 
 \section{State Machine}
 
-The state machine is in \texttt{main.c}. It is implemented using the
-\texttt{goto} statement which can lead to hard to understand code. To make
-development of the state machine easier all states are documented here and
-shown in a flow-chart. The program starts in the \texttt{enter\_clock\_mode}
-state.
+The state machine for clock mode is in \texttt{main.c} and the state machine
+for the menu mode is in \texttt{menu.c}. They are implemented using the
+\texttt{goto} statement which can lead to hard to understand code.  To give the
+programmer a better overview of the states and make development easier some
+states are documented here and shown in flow-charts. The program starts in the
+\texttt{enter\_clock\_mode} state. The clock mode state machine is illustrated
+in Figure \ref{fig:clock-state}.
 
-\vspace{5mm}
-\input{clock-state}
+\begin{figure}[h]
+    \centering
+    \input{clock-state}
+    \caption{The clock mode state machine}
+    \label{fig:clock-state}
+\end{figure}
+
+The menu mode state machine is a bit more complicated. A simple overview is
+shown in Figure \ref{fig:menu-flowchart}. There are three basic state types in the
+menu. \emph{Menu} states, \emph{choose} states and \emph{set} states. The menu
+states are very simple. Each show some text on the display, then wait for a
+button interrupt. If the \texttt{L} or \texttt{R} button is pressed the
+state is changed to the previous or next menu state. If the \texttt{SP} button
+is pressed it is changed to a choose or set state.
+
+A choose state is used when there is multiple options for the setting that is
+edited. For example when changing time. A choose state first shows the current
+value of that setting, sets an RTC alarm for when it is changed and waits for
+an interrupt. If the interrupt is from the RTC the new value is shown. If it is
+from the \texttt{L} or \texttt{R} buttons the state changes to the previous or
+next choose state. If it is from the \texttt{SP} button the state changes to
+the corresponding set state.
+
+A set state works a lot like a choose state. A RTC interrupt changes the value
+shown and \texttt{SP} interrupt changes state (go back to the choose state).
+But a \texttt{L} or \texttt{R} button interrupt de- or increments the value
+instead.
+
+Figure \ref{fig:choose-and-set-state} shows the program flow between a choose
+and a set state in detail. The actual implementation varies slightly
+between types.
+
+\begin{figure}[h]
+    \centering
+    \input{choose-and-set-state}
+    \caption{A choose and set state combo}
+    \label{fig:choose-and-set-state}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \input{menu-flowchart}
+    \label{fig:menu-flowchart}
+    \caption{An overview of the menu}
+\end{figure}
 
 \end{document}

@@ -3,7 +3,7 @@
 
 \LoadClass{article}
 
-\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage[a4paper, total={6.5in, 8in}]{geometry}
 
 \renewcommand{\maketitle}{%
     {

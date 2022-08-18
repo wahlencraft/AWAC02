@@ -1,0 +1,49 @@
+\begin{tikzpicture}[every node/.style={scale=1}]
+
+\node (ENTER_MENU_MODE) [menu-enterexit] { Enter menu mode };
+
+\node (MENU_BRIGHTNESS) [menu-item, below=of ENTER_MENU_MODE] { Brightness };
+
+\IncrementDecrementNode{right}{MENU_BRIGHTNESS}
+%\node(SET_BRIGHTNESS) [menu-setting, right=of MENU_BRIGHTNESS] { Set Brightness };
+
+\node(MENU_TIME) [menu-item, below=of MENU_BRIGHTNESS] { Time };
+
+\node(MENU_EXIT) [menu-item, below=of MENU_TIME] { Exit };
+
+\node(EXIT_MENU_MODE) [menu-enterexit, below=of MENU_EXIT] { Exit menu mode };
+
+% Time
+
+\SetTimeNode{SET_SECOND}{right=\shortarrowlength of MENU_TIME,yshift=-1em}{Second};
+\SetTimeNode{SET_MINUTE}{right=\shortarrowlength of SET_SECOND}{Minute};
+
+\node (SET_DOTDOTDOT) [right=of SET_MINUTE]{\dots};
+
+\SetTimeNode{SET_YEAR}{right=of SET_DOTDOTDOT}{Year};
+
+\node (SET_EXIT) [menu-small-item, right=\shortarrowlength of SET_YEAR] {Exit};
+
+% Time arrows
+\LRhor{SET_SECOND}{SET_MINUTE}
+\LRhor{SET_MINUTE}{SET_DOTDOTDOT}
+\LRhor{SET_DOTDOTDOT}{SET_YEAR}
+\LRhor{SET_YEAR}{SET_EXIT}
+
+% Arrows between menu items
+\draw[menu-single] (ENTER_MENU_MODE) -- (MENU_BRIGHTNESS);
+
+\LRvert{MENU_BRIGHTNESS}{MENU_TIME}
+\LRvert{MENU_TIME}{MENU_EXIT}
+
+\draw[menu-single] (MENU_EXIT) -- node[button-label] {SP} (EXIT_MENU_MODE);
+
+% Arrows to set brightness items
+\draw[menu-double] (MENU_BRIGHTNESS) -- node[button-label] {SP} (_MENU_BRIGHTNESSset);
+
+% Arrows to set time items
+\draw[menu-single] ([yshift=-1em]MENU_TIME.east) -- node[button-label] {SP} (SET_SECOND);
+
+\draw[menu-single] (SET_EXIT.north) |- node[button-label] {SP} ([yshift=1em]MENU_TIME.east);
+
+\end{tikzpicture}
