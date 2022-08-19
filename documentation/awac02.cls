@@ -29,3 +29,13 @@
 }
 
 \pagenumbering{gobble} % Turn off page-numbering for the first page
+
+% Header
+\usepackage{fancyhdr}
+\setlength{\headheight}{30pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[EOL]{\fontsize{20}{30}\fontfamily{phv}\fontseries{b}\selectfont AWAC02 } 
+\fancyhead[EOR]{\fontsize{12}{17}\fontfamily{phv}\fontseries{b}\fontshape{sl}\selectfont \@title}
+\fancyfoot[EOC]{\thepage}
+\thispagestyle{empty}
