@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.2.0] -- 2022-08-22
 ### Added
 - Button input
 - EEPROM read/write (non-volatile storage)
