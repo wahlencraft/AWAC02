@@ -239,7 +239,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "awac02-schematics.kicad_pro",
+    "filename": "AWAC02.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -310,7 +310,7 @@
       "workbook_filename": ""
     },
     "page_layout_descr_file": "",
-    "plot_directory": "/home/albin/git/AWAC02/schematics/",
+    "plot_directory": "../",
     "spice_adjust_passive_values": false,
     "spice_external_command": "spice \"%I\"",
     "subpart_first_id": 65,

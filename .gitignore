@@ -7,6 +7,7 @@ hardware/*.bak
 hardware/*-bak
 hardware/*-backups
 hardware/*auto_saved_files*
+hardware/*autosave*
 
 # LaTeX
 documentation/*.pdf
