@@ -28,7 +28,7 @@ The files are listed in order of relevance.
     File(s)                  & Description \\ [0.5ex]
     \hline
     \texttt{main.c}                     & The main file. Contains the
-                                          clock-mode state-machinde.\\
+                                          clock-mode state-machine.\\
     \texttt{constants.h}                & Global constants for defining number
                                           of displays, enabling logging etc. \\
     \texttt{menu.h}, \texttt{menu.c}    & The state machine for the menu. \\
@@ -42,7 +42,7 @@ The files are listed in order of relevance.
     \texttt{display.h}, \texttt{display.c} & Low level functions to interface
                                              with the Qwiic Alphanumeric Display \\
     \texttt{helpers.h}, \texttt{helpers.c} & Simple helper-functions. \\
-    \texttt{external\_interrrupts.h}, \texttt{external\_interrupts.S} & 
+    \texttt{external\_interrupts.h}, \texttt{external\_interrupts.S} &
                     Register and extract the external interrupts (button
                     presses and RTC alarms). \\
     \texttt{time.h}, \texttt{time.S}    & Start and use the hardware times. \\
@@ -62,12 +62,17 @@ The files are listed in order of relevance.
 
 \section{Schematic}
 
-In figure \ref{fig:schematic} the schematics is shown. The schematic is found
-seperatly in the \texttt{hardware} directory.
+In figure \ref{fig:circuit} the circuit is shown. The value of R1-R7, C1 and C5-C7
+is only approximate. You can try different values. In addition to these
+components two Sparkfun Qwiic Alphanumeric Displays are used. One of the
+displays must be modified to disable the pull-up resistors and change the slave
+address to \texttt{0x71}.
 
 \begin{figure}[h]
-    \includegraphics[width=\textwidth]{../hardware/AWAC02-v01}
-    \label{fig:schematic}
+    \centering
+    \includegraphics[width=\textwidth, trim=5cm 5cm 6cm 2cm, clip]{../Circuit}
+    \caption{The circuit (excluding displays).}
+    \label{fig:circuit}
 \end{figure}
 
 \section{State Machine}
