@@ -4,7 +4,9 @@
 #define CONSTANTS_H_
 
 // Enable log
-//#define LOG
+#define LOG
+
+#define USER_ALARM_BEEP_MS 900
 
 // Configure display
 #define DISPLAYS 2
@@ -22,6 +24,10 @@
 #define RTC_control_reg 0x07
 #define RTC_ALARM0_OFFSET 0x0a
 #define RTC_ALARM1_OFFSET 0x11
+
+// PORT C
+#define USER_ALARM_PIN 0
+#define SP_LED_PIN 1
 
 #endif  // CONSTANTS_H_
 

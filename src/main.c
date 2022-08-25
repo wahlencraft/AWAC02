@@ -27,7 +27,7 @@ int main(void) {
     start_counter1();
     sei();
 
-    enable();
+    enable_user_alarm_pins();
 
     TWI_init();
 
@@ -52,6 +52,11 @@ int main(void) {
     log_time();
 
     uint8_t clock_mode = MINUTE;
+
+    while (1) {
+        toggle_user_alarm_pins();
+        sleep_ms1(USER_ALARM_BEEP_MS);
+    }
 
     goto enter_clock_mode;
 

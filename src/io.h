@@ -4,8 +4,8 @@
 #ifndef IO_H_H
 #define IO_H_H
 
-extern void enable();
-extern void toggle();
+extern void enable_user_alarm_pins();
+extern void toggle_user_alarm_pins();
 
 #endif  // IO_H_H
 
