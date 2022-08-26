@@ -7,6 +7,7 @@
 #define LOG
 
 #define USER_ALARM_BEEP_MS 900
+#define USER_ALARM_TIMEOUT 10 // Number of beeps/2 before alarm timeout. Range 1-255.
 
 // Configure display
 #define DISPLAYS 2
@@ -27,7 +28,6 @@
 
 // PORT C
 #define USER_ALARM_PIN 0
-#define SP_LED_PIN 1
 
 #endif  // CONSTANTS_H_
 

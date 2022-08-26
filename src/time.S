@@ -264,7 +264,7 @@ busy_wait_ms1:
 
 .global TIMER1_COMPA_vect
 ; Interupt timer 1
-; Used by sleep_ms1: Clear OCIEA1 and disable sleep mode
+; Used by sleep_ms1 and set_timer1_irq_alarm_ms: Clear OCIEA1 and disable sleep mode
 TIMER1_COMPA_vect:
     PUSH R16;
     PUSH R17;
@@ -285,8 +285,44 @@ TIMER1_COMPA_vect:
     POP R16;
     RETI;
 
+.global set_timer1_irq_alarm_ms
+; Input R25:R24 (ms to alarm)
+set_timer1_irq_alarm_ms:
+    ; Calculate number of counts to wait, output in R23:R22
+    CALL calc_counts_16_bits;
+
+    ; Get current counter value
+    CALL read_timer1; R25:R24 = TCNT1
+
+    ; Calculate OCR
+    ; R23:R22 = R23:R22 + R25:R24
+    ADD R22, R24;
+    ADC R23, R25;
+
+    ; Set OCR
+    STS OCR1AH, R23;
+    STS OCR1AL, R22;
+
+    ; Set output compare interrupt enable A for timer 1
+    LDS R18, TIMSK1;
+    SBR R18, (1<<OCIE1A);
+    STS TIMSK1, R18;
+
+    RET;
+
+.global sleep_until_interrupt
+sleep_until_interrupt:
+    ; Enable sleep mode
+    LDS R18, SMCR;
+    SBR R18, (1<<SE);
+    STS SMCR, R18;
+
+    SLEEP;  Sleep until interrupt
+
+    RET;
+
 .global sleep_ms1
-; Input R25:R24 (ms to wait)
+; Input R25:R24 (ms to sleep)
 sleep_ms1:
     ; Calculate number of counts to wait, output in R23:R22
     CALL calc_counts_16_bits;

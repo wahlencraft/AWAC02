@@ -79,6 +79,22 @@ extern void busy_wait_ms1(uint16_t t);
  */
 extern void sleep_ms0(uint16_t t);
 
+/* Set IRQ timer alarm 1 in t ms.
+ *
+ * Note that the rage of allowed t depends on the system clock frequency
+ * 1 <= t =< 65535*1024/(F_CPU/1,000) [ms]
+ * Also note that the system clock must be a multiple of 1,000
+ *
+ * For F_CPU = 8 MHz that is
+ * 1 <= t <= 8,388 [ms]
+ */
+extern void set_timer1_irq_alarm_ms(uint16_t t);
+
+/* Sleep until interrupt.
+ *
+ * This can be any type of interrupt. For example timers and external. */
+extern void sleep_until_interrupt();
+
 /* Use counter 1 timer A to sleep
  *
  * Counter 1 must be started first (with prescaler 1024)

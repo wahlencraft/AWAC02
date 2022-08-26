@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef UTILITIES_H_
 #define UTILITIES_H_

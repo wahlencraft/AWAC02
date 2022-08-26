@@ -12,22 +12,26 @@
 #include "rtc.h"
 #include "external_interrupts.h"
 #include "eeprom.h"
-#include "sleep.h"
 #include "menu.h"
 #include "utilities.h"
 
 #include "helpers.h"
 
+#define B_SP (1<<BUTTON_SP)
+#define B_R (1<<BUTTON_R)
+#define B_L (1<<BUTTON_L)
+#define I_RTC (1<<RTC_INT)
+
 extern volatile uint8_t irc_counter;
 
 int main(void) {
-    init_log(INFO | ERROR | WARNING | RTC | STATE);
+    init_log(INFO | ERROR | WARNING | STATE);
 
     start_counter0();
     start_counter1();
     sei();
 
-    enable_user_alarm_pins();
+    user_alarm_pin_enable();
 
     TWI_init();
 
@@ -53,11 +57,7 @@ int main(void) {
 
     uint8_t clock_mode = MINUTE;
 
-    while (1) {
-        toggle_user_alarm_pins();
-        sleep_ms1(USER_ALARM_BEEP_MS);
-    }
-
+    goto alarm_mode;
     goto enter_clock_mode;
 
 /*=============================================================================
@@ -75,9 +75,9 @@ clock_mode_check_interrupts:
     if (interrupts & (1<<RTC_INT)) {
         goto clock_mode_show;
     }
-    if (interrupts & (1<<BUTTON_SP))
+    if (interrupts & B_SP)
         goto clock_mode_increment;
-    if (interrupts & ((1<<BUTTON_L) | (1<<BUTTON_R)))
+    if (interrupts & (B_L | B_R))
         goto enter_menu_mode;
     goto clock_mode_wfi;
 
@@ -97,6 +97,40 @@ clock_mode_wfi:
     TWI_wait();
     sleep_until_interrupt();
     goto clock_mode_check_interrupts;
+
+/*=============================================================================
+ * ALARM MODE
+ *===========================================================================*/
+
+alarm_mode:
+    {
+        log(STATE, "Enter alarm mode\n");
+
+        user_alarm_pin_enable();
+        uint8_t timeout_counter = 0;
+        bool exit = false;
+        do {
+            user_alarm_pin_toggle();
+
+            // Sleep for USER_ALARM_BEEP_MS or until external interrupt
+            set_timer1_irq_alarm_ms(USER_ALARM_BEEP_MS);
+            sleep_until_interrupt();
+
+            // Check exit conditions
+            if (timeout_counter == USER_ALARM_TIMEOUT) {
+                log(INFO, "User alarm timeout\n");
+                exit = true;
+            }
+            if (extract_external_interrupts() & B_SP) {
+                log(INFO, "SP button pressed\n");
+                exit = true;
+            }
+            timeout_counter++;
+        } while (!exit);
+        log(INFO, "Exit alarm mode\n");
+        user_alarm_pin_off();
+        goto enter_clock_mode;
+    }
 
 /*=============================================================================
  * MENU MODE

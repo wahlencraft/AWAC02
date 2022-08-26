@@ -1,15 +1,17 @@
 #include <avr/io.h>
 #include "constants.h"
 
-.global enable_user_alarm_pins
-enable_user_alarm_pins:
+.global user_alarm_pin_enable
+user_alarm_pin_enable:
     SBI DDRC - 0x20, USER_ALARM_PIN
-    SBI DDRC - 0x20, SP_LED_PIN
     RET
 
-.global toggle_user_alarm_pins
-toggle_user_alarm_pins:
+.global user_alarm_pin_toggle
+user_alarm_pin_toggle:
     SBI PINC - 0x20, USER_ALARM_PIN
-    SBI PINC - 0x20, SP_LED_PIN
     RET
 
+.global user_alarm_pin_off
+user_alarm_pin_off:
+    CBI PORTC - 0x20, USER_ALARM_PIN
+    RET
