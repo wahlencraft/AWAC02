@@ -1,9 +1,7 @@
 #include <avr/io.h>
 #include "constants.h"
 
-//#define INTERRUPT_MASK (1<<BUTTON_SP) | (1<<BUTTON_U) | (1<<BUTTON_L) | (1<<BUTTON_R) | (1<<BUTTON_D) | (1<<RTC_INT)
-//#define INTERRUPT_MASK (1<<BUTTON_SP) | (1<<BUTTON_L) | (1<<BUTTON_R) | (1<<RTC_INT)
-#define INTERRUPT_MASK 0xf0
+#define INTERRUPT_MASK (1<<BUTTON_SP) | (1<<BUTTON_L) | (1<<BUTTON_R) | (1<<RTC_INT)
 
 .data
 .comm pin_memory, 1
@@ -46,8 +44,6 @@ PCINT2_vect:
 
     PUSH R24;
     PUSH R25;
-
-    SBI PINC - 0x20, 0
 
     LDS R24, irc_counter;
     INC R24;
