@@ -6,6 +6,8 @@
 // Enable log
 #define LOG
 
+#define RUN_TESTS
+
 #define USER_ALARM_BEEP_MS 900
 #define USER_ALARM_TIMEOUT 10 // Number of beeps/2 before alarm timeout. Range 1-255.
 

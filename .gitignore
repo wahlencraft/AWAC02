@@ -12,6 +12,7 @@ hardware/*autosave*
 # LaTeX
 documentation/*.pdf
 documentation/*.log
+documentation/*.out
 documentation/*.aux
 documentation/*.fls
 documentation/*.fdb_latexmk

@@ -14,6 +14,7 @@
 #include "eeprom.h"
 #include "menu.h"
 #include "utilities.h"
+#include "user_alarm.h"
 
 #include "helpers.h"
 
@@ -50,6 +51,7 @@ int main(void) {
     RTC_start();
 
     init_external_interrupts();
+    user_alarm_init();
 
     restore_display_brightness();
 
@@ -57,7 +59,8 @@ int main(void) {
 
     uint8_t clock_mode = MINUTE;
 
-    goto alarm_mode;
+    user_alarm_tests();
+
     goto enter_clock_mode;
 
 /*=============================================================================

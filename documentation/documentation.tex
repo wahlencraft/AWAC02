@@ -24,7 +24,8 @@ The files are listed in order of relevance.
 
 \begin{centering}
 \vspace{3mm}
-\begin{tabularx}{.9\textwidth}{ >\raggedright p{5cm} | X }
+\begin{tabularx}{.9\textwidth}{ | >\raggedright p{5cm} | X | }
+    \hline
     File(s)                  & Description \\ [0.5ex]
     \hline
     \texttt{main.c}                     & The main file. Contains the
@@ -41,6 +42,8 @@ The files are listed in order of relevance.
                                           the external RTC clock. \\
     \texttt{display.h}, \texttt{display.c} & Low level functions to interface
                                              with the Qwiic Alphanumeric Display \\
+    \texttt{user\_alarms.h}, \texttt{user\_alarms.c} & High level functions to
+    find and modify alarms set by the user. \\
     \texttt{helpers.h}, \texttt{helpers.c} & Simple helper-functions. \\
     \texttt{external\_interrupts.h}, \texttt{external\_interrupts.S} &
                     Register and extract the external interrupts (button
@@ -55,7 +58,8 @@ The files are listed in order of relevance.
     \texttt{io.h}, \texttt{io.S}        & Direct control of pins. \\
     \texttt{usart.h}, \texttt{usart.S}  & Send data through USART. This is used
                                           to implement printf in `log.c` \\
-    \texttt{math.S}                     & Low level math for assembly routines.
+    \texttt{math.S}                     & Low level math for assembly routines. \\
+    \hline
 \end{tabularx}
 \end{centering}
 
@@ -129,5 +133,66 @@ between types.
     \label{fig:menu-flowchart}
     \caption{An overview of the menu}
 \end{figure}
+
+\section{EEPROM}
+
+The ATmega328p has 1024 bytes non-volatile EEPROM storage. This space is used to
+store user-made settings such as display brightness and alarms. This means that
+this information will be available even after a power loss. The current time
+will however be lost.
+
+Low level EEPROM access is implemented in \texttt{eeprom.h} and
+\texttt{eeprom.S}.
+
+\subsection{User Alarms}
+User alarms is the alarms set by the user with the time at which the buzzer
+should sound. Not to be confused with RTC alarms which is interrupts triggered
+by the RTC. User alarms are implemented
+in \texttt{user\_alarms.h} and \texttt{user\_alarms.c}.
+
+The user alarms are stored as an array with the element size of 2
+bytes. Each element contains the day of the week, hour, minute and status of
+the alarm. The element content is described by Table \ref{tab:user-alarm}.  In
+addition to the elements, the array length $n$ is also stored in EEPROM. Note
+that the array size is $2n$ bytes.
+
+The array is not sorted. That means that the entire array needs to be traversed
+to look for a match. However, the main performance consern is writes as one write
+takes a very long time (around 3.3 ms). In Table
+\ref{tab:user-alarm-performance} we see that deletes are particulary
+problematic. Fortunatly deletes should be uncommon. Finding is the most common
+operation and it does not require any writes.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{| l | c | c | c | c |}
+    \hline
+    Data & Range & Bits & Byte & Notes\\
+    \hline
+    D.o.t.w. & 0-7 & 7-5 & high & 0 is all weekdays\\
+    Hour & 0-23 & 4-0 & high & -\\
+    Minute & 0-59 & 7-2 & low & -\\
+    Status & 0-1 & 1 & low & 0 is off, 1 is on\\
+    \hline
+\end{tabular}
+\caption{An user alarm}
+\label{tab:user-alarm}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{| l | c | c | c |}
+    \hline
+    Operation & Performance & Writes \\
+    \hline
+    Add item & $\mathcal{O}(1)$ & $3$ \\
+    Find item & $\mathcal{O}(n)$ & $0$ \\
+    Delete item & $\mathcal{O}(n)$ & $\leq 2n - 2$ \\
+    Modify item & $\mathcal{O}(1)$ & $2$ \\
+    \hline
+\end{tabular}
+\caption{User alarm performance analysis}
+\label{tab:user-alarm-performance}
+\end{table}
 
 \end{document}

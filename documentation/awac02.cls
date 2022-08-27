@@ -28,6 +28,19 @@
     {\newpage\fontsize{15}{20}\fontfamily{phv}\fontseries{b}\slshape}
 }
 
+\renewcommand{\subsection}{\@startsection{subsection}
+    % Level
+    {2}
+    % Indent
+    {0pt}
+    % Beforeskip
+    {-2.5ex \@plus -1ex \@minus -.2ex}
+    % Afterskip
+    {1.3ex \@plus.2ex}
+    % Style
+    {\fontsize{13}{15}\fontfamily{phv}\fontseries{b}\selectfont}
+}
+
 \pagenumbering{gobble} % Turn off page-numbering for the first page
 
 % Header
