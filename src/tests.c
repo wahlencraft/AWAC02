@@ -65,7 +65,13 @@ void run_tests() {
         alarm.hour = 7;
         alarm.minute = 15;
         alarm.status = true;
-        user_alarm_add(&alarm);
+        test(user_alarm_add(&alarm) == 0);
+        // Was the alarm successfully added?
+        test(user_alarm_exists_exact(0, 7, 15));
+
+        // Try adding the same alarm again
+        test(user_alarm_add(&alarm) == 1);
+
         alarm.dotw = 6;
         alarm.hour = 9;
         alarm.minute = 0;
@@ -105,6 +111,25 @@ void run_tests() {
         test(!user_alarm_delete(0));
         test(!user_alarm_delete(0));
         test(user_alarm_get_len() == 0);
+
+        // Try to delete when there is none
+        test(user_alarm_delete(0));
+
+        // Edge case: Add 1 alarm, then add an alarm before it
+        alarm.dotw = 1;
+        alarm.hour = 8;
+        alarm.minute = 10;
+        user_alarm_add(&alarm);
+        alarm.minute = 0;
+        user_alarm_add(&alarm);
+        user_alarm_read(0, &alarm);
+        test(alarm.minute == 0);
+        user_alarm_read(1, &alarm);
+        test(alarm.minute == 10);
+
+        // Delete the alarms
+        test(!user_alarm_delete(0));
+        test(!user_alarm_delete(0));
 
         end_test();
     }

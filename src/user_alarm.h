@@ -16,6 +16,12 @@ typedef struct UserAlarm {
     bool status;
 } user_alarm_t;
 
+/* Find which alarm is earliest.
+ *
+ * Alarms are sorted with DOTW=WD being first.
+ * Returns 0 if alm0 is first, 1 if alm1 is first and -1 if they are the same. */
+int8_t user_alarm_find_first(user_alarm_t *alm0, user_alarm_t *alm1);
+
 /* Writes an user alarm to EEPROM directly with index.
  *
  * Warning this is very slow. Avoid using if possible. */
@@ -29,8 +35,8 @@ uint8_t user_alarm_get_len();
 
 void user_alarm_init();
 
-/* Add a new user alarm. */
-void user_alarm_add(user_alarm_t *alarm);
+/* Add a new user alarm, return 0 on success*/
+uint8_t user_alarm_add(user_alarm_t *alarm);
 
 /* Deletes an alarm, return 0 on success. */
 uint8_t user_alarm_delete(uint8_t index);

@@ -6,6 +6,22 @@
 
 #define WD 0
 
+int8_t user_alarm_find_first(user_alarm_t *alm0, user_alarm_t *alm1) {
+    if (alm0->dotw < alm1->dotw)
+        return 0;
+    if (alm0->dotw > alm1->dotw)
+        return 1;
+    if (alm0->hour < alm1->hour)
+        return 0;
+    if (alm0->hour > alm1->hour)
+        return 1;
+    if (alm0->minute < alm1->minute)
+        return 0;
+    if (alm0->minute > alm1->minute)
+        return 1;
+    return -1;
+}
+
 void user_alarm_write(uint8_t index, user_alarm_t *alarm) {
     uint8_t high = (alarm->dotw << 5) | (alarm->hour);
     uint8_t low = (alarm->minute << 2) | (alarm->status << 1);
@@ -32,10 +48,49 @@ void user_alarm_init() {
     }
 }
 
-void user_alarm_add(user_alarm_t *alarm) {
+uint8_t user_alarm_add(user_alarm_t *alarm) {
+    uint8_t index;
     uint8_t len = user_alarm_get_len();
-    user_alarm_write(len, alarm);
+    if (len > 0) {
+        // Find the correct spot to put the image with a modified binary search
+        uint8_t high = len - 1;
+        uint8_t low = 0;
+
+        user_alarm_t existing_alarm;
+        do {
+            uint8_t mid = (high + low)/2;
+            user_alarm_read(mid, &existing_alarm);
+            int8_t status = user_alarm_find_first(alarm, &existing_alarm);
+            switch (status) {
+                case 0:
+                    // alarm is earlier than existing_alarm
+                    // The index of alarm can be no higer than mid
+                    high = mid;
+                    break;
+                case 1:
+                    // alarm is later than existing_alarm
+                    // The index of alarm can be no lower than mid + 1
+                    low = mid + 1;
+                    break;
+                case -1:
+                    // alarm is the same as existing_alarm. Error.
+                    return 1;
+            }
+        } while (low < high);
+        index = low;
+        // Shift remaining alarms
+        for (int16_t i=len-1; i>=index && i >= 0; --i) {
+            user_alarm_t alm;
+            user_alarm_read(i, &alm);
+            user_alarm_write(i + 1, &alm);
+        }
+    } else {
+        index = 0;
+    }
+
+    user_alarm_write(index, alarm);
     EEPROM_write(EEPROM_ADDR_USER_ALARM_LEN, len + 1);
+    return 0;
 }
 
 uint8_t user_alarm_delete(uint8_t index) {
