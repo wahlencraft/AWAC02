@@ -15,6 +15,8 @@
 #include "menu.h"
 #include "utilities.h"
 #include "user_alarm.h"
+#include "tests.h"
+#include "printing.h"
 
 #include "helpers.h"
 
@@ -26,6 +28,12 @@
 extern volatile uint8_t irc_counter;
 
 int main(void) {
+
+    init_printing();
+    user_alarm_init();
+
+    run_tests();  // Must be after init_log and user_alarm_init
+                  //
     init_log(INFO | ERROR | WARNING | STATE);
 
     start_counter0();
@@ -51,7 +59,6 @@ int main(void) {
     RTC_start();
 
     init_external_interrupts();
-    user_alarm_init();
 
     restore_display_brightness();
 
@@ -59,7 +66,6 @@ int main(void) {
 
     uint8_t clock_mode = MINUTE;
 
-    user_alarm_tests();
 
     goto enter_clock_mode;
 

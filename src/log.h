@@ -16,6 +16,7 @@
 #define LOG_H_
 
 #include "constants.h"
+#include "printing.h"
 #include <stdint.h>
 
 #define INFO 1<<0
@@ -39,10 +40,6 @@ char* log_level_to_string(uint8_t lvl);
 extern uint8_t log_levels;
 
 #ifdef LOG
-#   include <stdio.h>
-#   include "usart.h"
-#   include <avr/pgmspace.h>
-    extern int USART_putchar_printf(char var, FILE *stream);
 #   define log(lvl, fmt, args...)({if (lvl & log_levels) printf_P(PSTR("%s "__FILE__": "fmt KNRM), log_level_to_string(lvl), ##args);})
 #else
 #   define log(lvl, fmt, args...)  // Do nothing
