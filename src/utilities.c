@@ -139,6 +139,7 @@ uint8_t change_time_value(uint8_t type, int8_t change) {
                 RTC_get_all(values);
                 uint8_t day = values[4];
                 uint8_t month = values[5];
+                uint8_t year;
                 switch (month) {
                     // Jan, Mar, May, July, Aug, Oct, Dec
                     case 1:
@@ -152,7 +153,7 @@ uint8_t change_time_value(uint8_t type, int8_t change) {
                         break;
                     // Feb
                     case 2:
-                        uint8_t year = values[6];
+                        year = values[6];
                         if (year % 4) {
                             // Not divisible by 4
                             new_value = circular_addition(1, 28, day, change);

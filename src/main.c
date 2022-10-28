@@ -73,16 +73,18 @@ enter_clock_mode:
     goto clock_mode_show;
 
 clock_mode_check_interrupts:
-    uint8_t interrupts = extract_external_interrupts();
-    log(STATE, "Clock mode: check interrupt (0x%x)\n", interrupts);
-    if (interrupts & (1<<RTC_INT)) {
-        goto clock_mode_show;
+    {
+        uint8_t interrupts = extract_external_interrupts();
+        log(STATE, "Clock mode: check interrupt (0x%x)\n", interrupts);
+        if (interrupts & (1<<RTC_INT)) {
+            goto clock_mode_show;
+        }
+        if (interrupts & B_SP)
+            goto clock_mode_increment;
+        if (interrupts & (B_L | B_R))
+            goto enter_menu_mode;
+        goto clock_mode_wfi;
     }
-    if (interrupts & B_SP)
-        goto clock_mode_increment;
-    if (interrupts & (B_L | B_R))
-        goto enter_menu_mode;
-    goto clock_mode_wfi;
 
 clock_mode_show:
     show_time(clock_mode);

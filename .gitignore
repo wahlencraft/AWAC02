@@ -1,6 +1,7 @@
 build
 *.hex
 *.elf
+*.swp
 
 # KiCad backup files
 hardware/*.bak

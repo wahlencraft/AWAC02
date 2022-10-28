@@ -1,7 +1,7 @@
 #include <avr/io.h>
 
 #define USART_BAUDRATE 9600
-#define BAUD_GEN (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
+#define BAUD_GEN (((F_CPU / (USART_BAUDRATE * 16))) - 1)
 
 .global USART_init
 USART_init:
