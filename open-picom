@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+serial_device=/dev/ttyACM0
+block_device=/dev/sdd1
+binary=pico-uart-bridge-v3.0.uf2
+if [ -e "$serial_device" ] ; then
+    sudo picocom $serial_device -b 9600 -l
+else
+    echo Failed to find serial device: $serial_device
+    echo Trying to re-mount
+    if [ -b $block_device ] ; then
+        sudo mount $block_device /mnt/pico
+        sudo cp $binary /mnt/pico/
+        sudo sync
+        sudo umount /mnt/pico
+        sleep 1
+        sudo picocom $serial_device -b 9600 -l
+    else
+        echo Failed to find block device: $block_device
+    fi
+fi
