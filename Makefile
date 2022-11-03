@@ -41,7 +41,7 @@ DEPS := $(ALL_OBJECTS:.o=.d)
 
 OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
 
-AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
+AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -V
 COMPILE = avr-gcc -Wall -Os -MMD -MP -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # symbolic targets:
