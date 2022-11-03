@@ -4,18 +4,17 @@
 
 % State machine
 
-\tikzstyle{start} = [rectangle, rounded corners, minimum width=3cm, text centered,
- draw=black, fill=red!30, inner sep=1em]
+\tikzstyle{base} = [minimum width=3cm, minimum height=1cm, node distance=2em, text centered, draw=black, inner sep=5pt]
+
+\tikzstyle{start} = [base, rectangle, rounded corners, draw=black, fill=red!30]
 
 \tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, 
  minimum height=1cm, text centered, draw=black, fill=blue!30, trapezium stretches=true,
  align=center, inner sep=1em] 
 
-\tikzstyle{state} = [rectangle, minimum height=1cm, align=center,
-      draw=black, fill=orange!30, inner sep=1em]
+\tikzstyle{state} = [base, rectangle, fill=orange!30]
 
-\tikzstyle{decision} = [ellipse, minimum width=3cm, minimum height=1cm, text centered, draw=black,
- fill=green!30, inner sep=.5em]
+\tikzstyle{decision} = [base, rectangle, rounded corners=0.8em, fill=green!30]
 
 \tikzstyle{subprocess} = [rectangle, draw = black!50, minimum height = 2em, fill=pink!50]
 

@@ -1,11 +1,14 @@
 \begin{tikzpicture}[every node/.style={scale=0.7}]
 
 \node (CLOCK_MODE_SHOW) [state] { \texttt{clock\_mode\_show}};
+\node (CLOCK_MODE_CHECK_ALARM) [decision, left=of CLOCK_MODE_SHOW] {\texttt{clock\_mode\_check\_alarm}};
 \node (ENTER_CLOCK_MODE) [start, above=of CLOCK_MODE_SHOW] {\texttt{enter\_clock\_mode}};
 \node (CLOCK_MODE_INCREMENT) [state, right=of CLOCK_MODE_SHOW] {\texttt{clock\_mode\_increment}};
-\node (CLOCK_MODE_WFI) [state, left=of CLOCK_MODE_SHOW] {\texttt{clock\_mode\_wfi}};
+\node (CLOCK_MODE_WFI) [state, left=of CLOCK_MODE_CHECK_ALARM] {\texttt{clock\_mode\_wfi}};
 \node (CLOCK_MODE_CHECK_INTERRUPTS) [decision, below=of CLOCK_MODE_WFI] {\texttt{clock\_mode\_check\_interrupts}};
 \node (ENTER_MENU_MODE) [start, right=of CLOCK_MODE_INCREMENT] {\texttt{enter\_menu\_mode}};
+
+\node (USER_ALARM_MODE) [state, above=of CLOCK_MODE_CHECK_ALARM] {\texttt{user\_alarm\_mode}};
 
 \draw [arrow] (ENTER_CLOCK_MODE) -- (CLOCK_MODE_SHOW);
 
@@ -14,8 +17,12 @@
 \draw [arrow] (CLOCK_MODE_CHECK_INTERRUPTS) -| node[anchor=north]{Button SP} (CLOCK_MODE_INCREMENT);
 \draw [arrow] (CLOCK_MODE_CHECK_INTERRUPTS) -| node[anchor=north]{Button R} (ENTER_MENU_MODE);
 
-\draw [arrow] (CLOCK_MODE_SHOW) -- (CLOCK_MODE_WFI);
+\draw [arrow] (CLOCK_MODE_SHOW) -- (CLOCK_MODE_CHECK_ALARM);
+\draw [arrow] (CLOCK_MODE_CHECK_ALARM) -- (CLOCK_MODE_WFI);
 \draw [arrow] (CLOCK_MODE_INCREMENT) -- (CLOCK_MODE_SHOW);
 \draw [slow_arrow] (CLOCK_MODE_WFI) -- (CLOCK_MODE_CHECK_INTERRUPTS);
+
+\draw [arrow] (CLOCK_MODE_CHECK_ALARM) -- (USER_ALARM_MODE);
+\draw [arrow] (USER_ALARM_MODE) -| (CLOCK_MODE_WFI);
 
 \end{tikzpicture}
