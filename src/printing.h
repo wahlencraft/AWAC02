@@ -1,6 +1,8 @@
 #ifndef PRINTING_H_
 #define PRINTING_H_
 
+#include "constants.h"
+
 #ifdef LOG
 #   include <stdio.h>
 #   include "usart.h"
