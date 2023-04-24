@@ -67,7 +67,9 @@ PCINT2_vect:
     OR R25, R24;
     EOR R25, R24;
 
-    ; Save result in triggered_interrupts
+    ; Save result in triggered_interrupts (without removing previously saved interrupts)
+    LDS R24, triggered_interrupts;
+    OR R25, R24;
     STS triggered_interrupts, R25;
 
     POP R25;
