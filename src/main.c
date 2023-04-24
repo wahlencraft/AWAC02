@@ -66,10 +66,14 @@ int main(void) {
 
     uint8_t clock_mode = MINUTE;
 
+    // Set alarm now (for test purpose)
+    uint8_t time_arr_tmp[7];
+    RTC_get_all(time_arr_tmp);
+
     struct UserAlarm alm;
-    alm.dotw = 0;
-    alm.hour = 11;
-    alm.minute = 56;
+    alm.dotw = time_arr_tmp[DOTW];
+    alm.hour = time_arr_tmp[HOUR];
+    alm.minute = time_arr_tmp[MINUTE] + 0;
     alm.status = true;
 
     user_alarm_add(&alm);
@@ -143,8 +147,6 @@ alarm_mode:
         bool exit = false;
         do {
             user_alarm_pin_toggle();
-
-            // Sleep for USER_ALARM_BEEP_MS or until external interrupt
             set_timer1_irq_alarm_ms(USER_ALARM_BEEP_MS);
             sleep_until_interrupt();
 
