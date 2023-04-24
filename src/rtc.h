@@ -39,7 +39,7 @@ void RTC_stop();
  */
 uint8_t RTC_get(uint8_t address);
 
-void RTC_get_all(uint8_t *value_list);
+void RTC_get_all(uint8_t value_list[7]);
 
 /* Set the clock value at address.
  *

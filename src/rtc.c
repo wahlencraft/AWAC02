@@ -48,7 +48,7 @@ uint8_t RTC_get(uint8_t address) {
         return bcd_to_number(twi_data[0] & 0x7f);
 }
 
-void RTC_get_all(uint8_t *value_list) {
+void RTC_get_all(uint8_t value_list[7]) {
     log(RTC, "RTC get all\n");
     TWI_read(RTC_SLAVE_ADDRESS, SECOND, 7);
     TWI_wait();

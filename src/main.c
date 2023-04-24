@@ -66,6 +66,16 @@ int main(void) {
 
     uint8_t clock_mode = MINUTE;
 
+    struct UserAlarm alm;
+    alm.dotw = 0;
+    alm.hour = 11;
+    alm.minute = 56;
+    alm.status = true;
+
+    user_alarm_add(&alm);
+
+    // To avoid firing twice on the same alarm
+    uint8_t last_alarm_minute = -1;
 
     goto enter_clock_mode;
 
@@ -95,6 +105,17 @@ clock_mode_check_interrupts:
 clock_mode_show:
     show_time(clock_mode);
     log(STATE, "Clock mode: show\n");
+
+    // Check if alarm should fire
+    uint8_t time_arr[7];
+    RTC_get_all(time_arr);
+    if (time_arr[MINUTE] != last_alarm_minute) {
+        last_alarm_minute = -1;
+        if (user_alarm_exists(time_arr[DOTW], time_arr[HOUR], time_arr[MINUTE])) {
+            last_alarm_minute = time_arr[MINUTE];
+            goto alarm_mode;
+        }
+    }
     goto clock_mode_wfi;
 
 clock_mode_increment:
