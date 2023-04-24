@@ -92,18 +92,24 @@ enter_clock_mode:
     clock_mode = MINUTE;
     goto clock_mode_show;
 
-clock_mode_check_interrupts:
+clock_mode_handle_irq:
     {
+        // Enter low power mode until next interrupt
+        set_alarm_next(clock_mode);
+        log(STATE, "Clock mode: handle irq\n");
+        TWI_wait();
+        sleep_until_interrupt();
+
         uint8_t interrupts = extract_external_interrupts();
-        log(STATE, "Clock mode: check interrupt (0x%x)\n", interrupts);
-        if (interrupts & (1<<RTC_INT)) {
-            goto clock_mode_show;
-        }
+        log(INFO, "interrupt vector = 0x%x\n", interrupts);
         if (interrupts & B_SP)
             goto clock_mode_increment;
         if (interrupts & (B_L | B_R))
             goto enter_menu_mode;
-        goto clock_mode_wfi;
+        if (interrupts & (1<<RTC_INT)) {
+            goto clock_mode_show;
+        }
+        goto clock_mode_handle_irq;
     }
 
 clock_mode_show:
@@ -120,19 +126,12 @@ clock_mode_show:
             goto alarm_mode;
         }
     }
-    goto clock_mode_wfi;
+    goto clock_mode_handle_irq;
 
 clock_mode_increment:
     log(STATE, "Clock mode: increment\n");
     clock_mode = (clock_mode + 1) % 3;
     goto clock_mode_show;
-
-clock_mode_wfi:
-    set_alarm_next(clock_mode);
-    log(STATE, "Clock mode: WFI\n");
-    TWI_wait();
-    sleep_until_interrupt();
-    goto clock_mode_check_interrupts;
 
 /*=============================================================================
  * ALARM MODE
