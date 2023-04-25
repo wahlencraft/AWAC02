@@ -3,11 +3,11 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-//#define LOG  // Enable log
-//#define RUN_TESTS  // Enable tests
+#define LOG  // Enable log
+#define RUN_TESTS  // Enable tests
 
-#define USER_ALARM_BEEP_MS 900
-#define USER_ALARM_TIMEOUT 20 // Number of beeps/2 before alarm timeout. Range 1-255.
+#define USER_ALARM_BEEP_MS 400
+#define USER_ALARM_TIMEOUT 80 // Number of beeps*2 before alarm timeout. Range 1-255.
 
 // Configure display
 #define DISPLAYS 2

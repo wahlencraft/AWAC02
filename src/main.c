@@ -73,7 +73,7 @@ int main(void) {
     struct UserAlarm alm;
     alm.dotw = time_arr_tmp[DOTW];
     alm.hour = time_arr_tmp[HOUR];
-    alm.minute = time_arr_tmp[MINUTE] + 0;
+    alm.minute = time_arr_tmp[MINUTE] + 1;
     alm.status = true;
 
     user_alarm_add(&alm);
@@ -146,8 +146,14 @@ alarm_mode:
         bool exit = false;
         do {
             user_alarm_pin_toggle();
-            set_timer1_irq_alarm_ms(USER_ALARM_BEEP_MS);
-            sleep_until_interrupt();
+            busy_wait_ms1(USER_ALARM_BEEP_MS);
+
+            // Note: This should idealy have been a sleep state. However that
+            // does not seem to work consistently. I don't know why. Using busy
+            // wait has the disadvantage of power consumption, but also that
+            // the alarm can only be stoped between beeps. This can be
+            // mitigated using short beeps so that the user does not notice a
+            // too large delay from the button press til the beep stops.
 
             // Check exit conditions
             if (timeout_counter == USER_ALARM_TIMEOUT) {
