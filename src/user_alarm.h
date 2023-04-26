@@ -36,6 +36,8 @@ uint8_t user_alarm_add(user_alarm_t *alarm);
 /* Deletes an alarm, return 0 on success. */
 uint8_t user_alarm_delete(uint8_t index);
 
+void user_alarm_delete_all();
+
 /* Check if active alarm exitsts.
  *
  * dotw = MON-FRI also matches if there is an alarm with dotw=WD.

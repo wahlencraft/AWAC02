@@ -119,6 +119,10 @@ uint8_t user_alarm_delete(uint8_t index) {
     }
 }
 
+void user_alarm_delete_all() {
+    EEPROM_write(EEPROM_ADDR_USER_ALARM_LEN, 0);
+}
+
 bool user_alarm_exists(uint8_t dotw, uint8_t hour, uint8_t minute) {
     uint8_t len = user_alarm_get_len();
     user_alarm_t alarm;
