@@ -82,12 +82,30 @@ address to \texttt{0x71}.
 \section{State Machine}
 
 The state machine for clock mode is in \texttt{main.c} and the state machine
-for the menu mode is in \texttt{menu.c}. They are implemented using the
-\texttt{goto} statement which can lead to hard to understand code.  To give the
-programmer a better overview of the states and make development easier some
-states are documented here and shown in flow-charts. The program starts in the
+for the menu mode is in \texttt{menu.c}. 
+Each state does something and calls the next state.
+That is done using the C \texttt{goto} statement.
+To help keep track of which state preceedes which some graphs are shown in this
+section.
+
+The program starts in the
 \texttt{enter\_clock\_mode} state. The clock mode state machine is illustrated
 in Figure \ref{fig:clock-state}.
+The clock mode states are:
+\begin{itemize}
+    \item \texttt{enter\_clock\_mode}: The inital state for clock mode.
+    \item \texttt{clock\_mode\_increment}: Change clock mode (\texttt{DOTW
+            HH:MM} $\to$ \texttt{YYYY MM:DD} $\to$ \texttt{HH MM:SS}).
+    \item \texttt{clock\_mode\_show}: Show the time in the current clock mode.
+        If there is an user alarm go to \texttt{user\_alarm\_mode}.
+    \item \texttt{user\_alarm\_mode}: Beep the buzzer and flash the LED until
+        a button is pressed (or timeout).
+    \item \texttt{clock\_mode\_handle\_irq}: Prepare a wakeup interrupt the
+        next time the clock must change (depends on clock mode) and put the
+        processor in sleep mode. Then choose the next state based on what
+        interrupt woke the CPU.
+    \item \texttt{enter\_menu\_mode}
+\end{itemize}
 
 \begin{figure}[h]
     \centering
