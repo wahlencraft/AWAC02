@@ -51,6 +51,8 @@ int main(void) {
 
     log(INFO, "Start program\n");
 
+    printf("Number of alarms = %d\n", user_alarm_get_len());
+
     set_display_buffer_long_string("STRTPRGM", 8);
     write_to_all_displays();
 

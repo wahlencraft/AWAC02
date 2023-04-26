@@ -6,7 +6,8 @@
 
 /* This file declares the functions used to handle user alarms. A user alarm is
  * a time when the buzzer should start beeping. A user alarm should not be
- * confused with a RTC alarm which is much more common.
+ * confused with a RTC alarm which happens every time the RTC triggeres an
+ * interrupt.
  */
 
 typedef struct UserAlarm {
@@ -15,12 +16,6 @@ typedef struct UserAlarm {
     uint8_t minute;
     bool status;
 } user_alarm_t;
-
-/* Find which alarm is earliest.
- *
- * Alarms are sorted with DOTW=WD being first.
- * Returns 0 if alm0 is first, 1 if alm1 is first and -1 if they are the same. */
-int8_t user_alarm_find_first(user_alarm_t *alm0, user_alarm_t *alm1);
 
 /* Writes an user alarm to EEPROM directly with index.
  *

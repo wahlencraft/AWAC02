@@ -6,20 +6,28 @@
 
 #define WD 0
 
-int8_t user_alarm_find_first(user_alarm_t *alm0, user_alarm_t *alm1) {
+enum Comparison { lt, gt, eq };
+
+/* Compare user alarms. Read return value as: alm0 is RESULT alm1, where RESULT
+ * is of enum Comparisoin.
+ *
+ * An earlier alarm is considered less than a
+ * later alarm. Consideres week day where WD is the earliest, then
+ * Monday-Sunday. */
+enum Comparison user_alarm_compare(user_alarm_t *alm0, user_alarm_t *alm1) {
     if (alm0->dotw < alm1->dotw)
-        return 0;
+        return lt;
     if (alm0->dotw > alm1->dotw)
-        return 1;
+        return gt;
     if (alm0->hour < alm1->hour)
-        return 0;
+        return lt;
     if (alm0->hour > alm1->hour)
-        return 1;
+        return gt;
     if (alm0->minute < alm1->minute)
-        return 0;
+        return lt;
     if (alm0->minute > alm1->minute)
-        return 1;
-    return -1;
+        return gt;
+    return eq;
 }
 
 void user_alarm_write(uint8_t index, user_alarm_t *alarm) {
@@ -60,19 +68,18 @@ uint8_t user_alarm_add(user_alarm_t *alarm) {
         do {
             uint8_t mid = (high + low)/2;
             user_alarm_read(mid, &existing_alarm);
-            int8_t status = user_alarm_find_first(alarm, &existing_alarm);
-            switch (status) {
-                case 0:
+            switch (user_alarm_compare(alarm, &existing_alarm)) {
+                case lt:
                     // alarm is earlier than existing_alarm
                     // The index of alarm can be no higer than mid
                     high = mid;
                     break;
-                case 1:
+                case gt:
                     // alarm is later than existing_alarm
                     // The index of alarm can be no lower than mid + 1
                     low = mid + 1;
                     break;
-                case -1:
+                case eq:
                     // alarm is the same as existing_alarm. Error.
                     return 1;
             }
