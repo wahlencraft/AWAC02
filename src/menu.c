@@ -8,6 +8,7 @@
 #include "utilities.h"
 #include "rtc.h"
 #include "flash.h"
+#include "time.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -18,6 +19,143 @@
 #define I_RTC (1<<RTC_INT)
 #define SET_TIME_EXIT 7
 #define BLINK_FREQ 1
+
+/*=============================================================================
+ * Helpers
+ *===========================================================================*/
+
+enum TimeMode { second, minute, hour, dotw, day, month, year, exit };
+
+void show_active_value(enum TimeMode mode) {
+    char mode_name[] = "SEC MIN HOURDOTWDAY MON YEAREXIT";
+    set_display_buffer_string(mode_name + mode*4, 0);
+    uint8_t value = RTC_get(mode);
+    switch (mode) {
+    case second:
+    case minute:
+    case hour:
+    case day:
+    case month:
+        set_display_buffer_number(value, 1);
+        break;
+    case dotw:
+        char dotw[5] = "     ";
+        add_dotw_to_string(dotw, value, 1);
+        set_display_buffer_string(dotw, 1);
+        break;
+    case year:
+        set_display_buffer_number(value + 2000, 1);
+        break;
+    case exit:
+        clear_display_buffer(1);
+        break;
+    }
+    write_to_all_displays();
+}
+
+void change_and_show_time_value(uint8_t type, int8_t change) {
+    char mode_name[] = "SEC MIN HOURDOTWDAY MON YEAR";
+    set_display_buffer_string(mode_name + type*4, 0);
+    uint8_t value;
+    switch (type) {
+    case SECOND:
+    case MINUTE:
+        {
+            value = RTC_get(type);
+            value = circular_addition(0, 59, value, change);
+            set_display_buffer_number(value, 1);
+            break;
+        }
+    case HOUR:
+        {
+            value = RTC_get(type);
+            value = circular_addition(0, 23, value, change);
+            set_display_buffer_number(value, 1);
+        }
+        break;
+    case DOTW:
+        {
+            value = RTC_get(type);
+            value = circular_addition(1, 7, value, change);
+            char dotw[5] = "     ";
+            add_dotw_to_string(dotw, value, 1);
+            set_display_buffer_string(dotw, 1);
+        }
+        break;
+    case DAY:
+        {
+            uint8_t values[7];
+            RTC_get_all(values);
+            uint8_t day = values[4];
+            uint8_t month = values[5];
+            uint8_t year;
+            switch (month) {
+            // Jan, Mar, May, July, Aug, Oct, Dec
+            case 1:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 10:
+            case 12:
+                value = circular_addition(1, 31, day, change);
+                set_display_buffer_number(value, 1);
+                break;
+            // Feb
+            case 2:
+                year = values[6];
+                if (year % 4) {
+                    // Not divisible by 4
+                    value = circular_addition(1, 28, day, change);
+                } else {
+                    // Divisible by 4
+                    value = circular_addition(1, 29, day, change);
+                }
+                set_display_buffer_number(value, 1);
+                break;
+            // Apr, June, Sept, Nov
+            case 4:
+            case 6:
+            case 9:
+            case 11:
+                value = circular_addition(1, 30, day, change);
+                set_display_buffer_number(value, 1);
+                break;
+            default:
+                value = -1;
+                log(ERROR, "change_time_value, invalid month (%d) when changing day\n", month);
+            }
+            break;
+        }
+        break;
+    case MONTH:
+        {
+            value = RTC_get(type);
+            value = circular_addition(1, 12, value, change);
+            set_display_buffer_number(value, 1);
+        }
+        break;
+    case YEAR:
+        {
+            value = RTC_get(type);
+            value = circular_addition(0, 99, value, change);
+            set_display_buffer_number(value + 2000, 1);
+        }
+        break;
+    default:
+        log(ERROR, "Change value of unknown type=%d\n", type);
+        value = -1;
+    }
+    if (type == SECOND)
+        RTC_set_second_and_start(value);
+    else
+        RTC_set(type, value);
+    write_to_all_displays();
+}
+
+/*=============================================================================
+ * The menu state machine
+ *===========================================================================*/
 
 void menu() {
 
@@ -72,17 +210,97 @@ menu_time:
     log(STATE, "Enter menu time\n");
     set_display_buffer_long_string("MENUTIME", 8);
     write_to_all_displays();
+    int8_t menu_time_mode = 0;
     while (true) {
         uint8_t interrupts = extract_external_interrupts();
         switch (interrupts) {
             case B_SP:
-                goto choose_second;
+                goto choose_time;
             case B_R:
                 goto menu_exit;
             case B_L:
                 goto menu_brightness;
         }
     }
+
+choose_time:
+{
+    log(STATE, "Enter choose time state\n");
+    // Display MODE on the left display and the value of that mode on the
+    // right display. Example if MODE=seconds: SEC_ __02.
+    // If L/R button is pressed de-/increment the mode. If SP button
+    // pressed enter set_time state.
+
+    while (true) {
+        log(STATE, "Choose time: mode=%d\n", menu_time_mode);
+        show_active_value(menu_time_mode);
+        set_alarm_next(menu_time_mode);
+        uint8_t interrupts;
+
+        // Busy wait for interrupt
+        while (!(interrupts = extract_external_interrupts()));
+
+        switch (interrupts) {
+        case 0:
+            break;
+        case I_RTC:
+            set_alarm_next(menu_time_mode);
+            log(INFO, "Reset due to RTC update\n");
+            show_active_value(menu_time_mode);
+            break;
+        case B_L:
+            RTC_disable_alarm(ALARM0);
+            menu_time_mode = (menu_time_mode == SECOND) ? SECOND : menu_time_mode - 1;
+            break;
+        case B_R:
+            RTC_disable_alarm(ALARM0);
+            menu_time_mode = (menu_time_mode == exit) ? exit : menu_time_mode + 1;
+            break;
+        case B_SP:
+            if (menu_time_mode != exit)
+                goto set_time;
+            else
+                goto menu_time;
+        default:
+            log(WARNING, "choose_second unknown interrupt: 0x%x\n", interrupts);
+        }
+    }
+}
+
+set_time:
+{
+    log(STATE, "Set time: mode=%d\n", menu_time_mode);
+    // Display MODE on the left display and the value of that mode on the
+    // right display. Example if MODE=seconds: SEC_ __02.
+    // If L/R button is pressed de-/increment the value. If SP button
+    // pressed go back to choose_time state.
+    set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
+    while (true) {
+        uint8_t interrupts = extract_external_interrupts();
+        switch (interrupts) {
+            case 0:
+                break;
+            case I_RTC:
+                set_alarm_next(menu_time_mode);
+                log(INFO, "Reset due to RTC update\n");
+                show_active_value(menu_time_mode);
+                break;
+            case B_R:
+                set_alarm_next(menu_time_mode);
+                change_and_show_time_value(menu_time_mode, 1);
+                break;
+            case B_L:
+                set_alarm_next(menu_time_mode);
+                change_and_show_time_value(menu_time_mode, -1);
+                break;
+            case B_SP:
+                set_display(ON, 0, 1);  // disable blinkmode on display 1
+                goto choose_time;
+            default:
+                log(WARNING, "set_second unknown interrupt: 0x%x\n", interrupts);
+        }
+    }
+}
 
 menu_exit:
     log(STATE, "Enter menu exit\n");
@@ -97,600 +315,5 @@ menu_exit:
                 goto menu_time;
         }
     }
-
-/*=============================================================================
- * Set time
- *===========================================================================*/
-choose_second:
-    log(STATE, "Enter choose_second\n");
-    {
-        // Show active value
-        set_display_buffer_string("SEC ", 0);
-        uint8_t value = RTC_get(SECOND);
-        set_display_buffer_number(value, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(SECOND);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                case B_L:
-                    break;
-                case I_RTC:
-                    set_alarm_next(SECOND);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(SECOND);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_minute;
-                    break;
-                case B_SP:
-                    goto set_second;
-                default:
-                    log(WARNING, "choose_second unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_minute:
-    log(STATE, "Enter choose_minute\n");
-    {
-        // Show active value
-        set_display_buffer_string("MIN ", 0);
-        uint8_t value = RTC_get(MINUTE);
-        set_display_buffer_number(value, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(MINUTE);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(MINUTE);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(MINUTE);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_hour;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_second;
-                    break;
-                case B_SP:
-                    goto set_minute;
-                default:
-                    log(WARNING, "choose_second unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_hour:
-    log(STATE, "Enter choose_hour\n");
-    {
-        // Show active value
-        set_display_buffer_string("HOUR", 0);
-        uint8_t value = RTC_get(HOUR);
-        set_display_buffer_number(value, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(HOUR);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_dotw;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_minute;
-                    break;
-                case B_SP:
-                    goto set_hour;
-                default:
-                    log(WARNING, "choose_hour unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_dotw:
-    log(STATE, "Enter choose_dotw\n");
-    {
-        // Show active value
-        set_display_buffer_string("DOTW", 0);
-        uint8_t value = RTC_get(DOTW);
-        char dotw[5] = "     ";
-        add_dotw_to_string(dotw, value, 1);
-        set_display_buffer_string(dotw, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(HOUR);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(DOTW);
-                    add_dotw_to_string(dotw, value, 1);
-                    set_display_buffer_string(dotw, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_day;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_hour;
-                    break;
-                case B_SP:
-                    goto set_dotw;
-                default:
-                    log(WARNING, "choose_dotw unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_day:
-    log(STATE, "Enter choose_day\n");
-    {
-        // Show active value
-        set_display_buffer_string("DAY ", 0);
-        uint8_t value = RTC_get(DAY );
-        set_display_buffer_number(value, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(HOUR);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(DAY);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_month;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_dotw;
-                    break;
-                case B_SP:
-                    goto set_day;
-                default:
-                    log(WARNING, "choose_day unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_month:
-    log(STATE, "Enter choose_month\n");
-    {
-        // Show active value
-        set_display_buffer_string("MON ", 0);
-        uint8_t value = RTC_get(MONTH);
-        set_display_buffer_number(value, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(HOUR);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(MONTH);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_year;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_day;
-                    break;
-                case B_SP:
-                    goto set_month;
-                default:
-                    log(WARNING, "choose_month unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-choose_year:
-    log(STATE, "Enter choose_year\n");
-    {
-        // Show active value
-        set_display_buffer_string("YEAR", 0);
-        uint8_t value = RTC_get(YEAR);
-        set_display_buffer_number(value + 2000, 1);
-        write_to_all_displays();
-
-        // Set alarm for value change
-        set_alarm_next(HOUR);
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(YEAR);
-                    set_display_buffer_number(value + 2000, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_exit;
-                    break;
-                case B_L:
-                    RTC_disable_alarm(ALARM0);
-                    goto choose_month;
-                    break;
-                case B_SP:
-                    goto set_year;
-                default:
-                    log(WARNING, "choose_year unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-
-choose_exit:
-    log(STATE, "Enter choose_exit\n");
-    {
-        // Show active value
-        set_display_buffer_string("EXIT", 0);
-        clear_display_buffer(1);
-        write_to_all_displays();
-
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                case B_R:
-                    break;
-                case B_L:
-                    goto choose_year;
-                case B_SP:
-                    goto menu_time;
-                default:
-                    log(WARNING, "choose_exit unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-
-set_second:
-    {
-        log(STATE, "Set second\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(SECOND);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(SECOND);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(SECOND);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(SECOND);
-                    set_alarm_next(SECOND);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(SECOND);
-                    set_alarm_next(SECOND);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_second;
-                default:
-                    log(WARNING, "set_second unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_minute:
-    {
-        log(STATE, "Set minute\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(MINUTE);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(MINUTE);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(MINUTE);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(MINUTE);
-                    set_alarm_next(MINUTE);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(MINUTE);
-                    set_alarm_next(MINUTE);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_minute;
-                default:
-                    log(WARNING, "set_minute unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_hour:
-    {
-        log(STATE, "Set hour\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(HOUR);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(HOUR);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(HOUR);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_hour;
-                default:
-                    log(WARNING, "set_hour unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_dotw:
-    {
-        log(STATE, "Set dotw\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(DOTW);
-        char dotw[5] = "     ";
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(DOTW);
-                    add_dotw_to_string(dotw, value, 1);
-                    set_display_buffer_string(dotw, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(DOTW);
-                    set_alarm_next(HOUR);
-                    add_dotw_to_string(dotw, value, 1);
-                    set_display_buffer_string(dotw, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(DOTW);
-                    set_alarm_next(HOUR);
-                    add_dotw_to_string(dotw, value, 1);
-                    set_display_buffer_string(dotw, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_dotw;
-                default:
-                    log(WARNING, "set_dotw unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_day:
-    {
-        log(STATE, "Set day\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(DAY);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(DAY);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(DAY);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(DAY);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_day;
-                default:
-                    log(WARNING, "set_day unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_month:
-    {
-        log(STATE, "Set minute\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(MONTH);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(MONTH);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(MONTH);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(MONTH);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_month;
-                default:
-                    log(WARNING, "set_month unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
-set_year:
-    {
-        log(STATE, "Set year\n");
-        set_display(ON, BLINK_FREQ, 1);  // Set blinkmode on display 1
-        uint8_t value = RTC_get(YEAR);
-        // Act on interrupts
-        while (true) {
-            uint8_t interrupts = extract_external_interrupts();
-            switch (interrupts) {
-                case 0:
-                    break;
-                case I_RTC:
-                    set_alarm_next(HOUR);
-                    log(INFO, "Reset due to RTC update\n");
-                    value = RTC_get(YEAR);
-                    set_display_buffer_number(value, 1);
-                    write_to_display(1);
-                    break;
-                case B_R:
-                    value = increment_time_value(YEAR);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value + 2000, 1);
-                    write_to_display(1);
-                    break;
-                case B_L:
-                    value = decrement_time_value(YEAR);
-                    set_alarm_next(HOUR);
-                    set_display_buffer_number(value + 2000, 1);
-                    write_to_display(1);
-                    break;
-                case B_SP:
-                    set_display(ON, 0, 1);  // disable blinkmode on display 1
-                    goto choose_year;
-                default:
-                    log(WARNING, "set_year unknown interrupt: 0x%x\n", interrupts);
-            }
-        }
-    }
-
 }
 

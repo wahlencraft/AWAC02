@@ -24,8 +24,4 @@ void apply_display_brightness_level(uint8_t level);
  * [mode] can be: SECOND, MINUTE or HOUR. */
 void set_alarm_next(uint8_t mode);
 
-/* In- or decrement time value on the RTC. Also return the new value. */
-uint8_t increment_time_value(uint8_t type);
-uint8_t decrement_time_value(uint8_t type);
-
 #endif  // UTILITIES_H_
