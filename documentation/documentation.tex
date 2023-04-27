@@ -184,10 +184,12 @@ The user alarms are stored as an array with the element size of 2
 bytes. Each element contains the day of the week, hour, minute and status of
 the alarm. The element content is described by Table \ref{tab:user-alarm}.  In
 addition to the elements, the array length $n$ is also stored in EEPROM. Note
-that the array size is $2n$ bytes.
+that the array size is $2n$ bytes. No check is made to ensure that storage
+constraints are not exceeded. However the available storage should be more than
+enough.
 
-The array is not sorted. That means that the entire array needs to be traversed
-to look for a match. However, the main performance consern is writes as one write
+The array is sorted. That means that an element can be found using binary
+search. However, the main performance consern is writes as one write
 takes a very long time (around 3.3 ms). In Table
 \ref{tab:user-alarm-performance} we see that deletes are particulary
 problematic. Fortunatly deletes should be uncommon. Finding is the most common
@@ -216,7 +218,7 @@ operation and it does not require any writes.
     Operation & Performance & Writes \\
     \hline
     Add item & $\mathcal{O}(1)$ & $3$ \\
-    Find item & $\mathcal{O}(n)$ & $0$ \\
+    Find item & $\mathcal{O}(\log n)$ & $0$ \\
     Delete item & $\mathcal{O}(n)$ & $\leq 2n - 2$ \\
     Modify item & $\mathcal{O}(1)$ & $2$ \\
     \hline
