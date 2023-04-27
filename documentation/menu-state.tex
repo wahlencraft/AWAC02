@@ -1,0 +1,20 @@
+\begin{tikzpicture}[every node/.style={scale=0.7}]
+
+% Top row
+\node (BRIGHTNESS) [start] { \texttt{menu\_brightness} };
+\node (TIME) [state, right=of BRIGHTNESS] { \texttt{menu\_time} };
+\node (EXIT) [state, right=of TIME] { \texttt{menu\_exit} };
+
+\node (SET_BRIGHTNESS) [state, below=of BRIGHTNESS] { \texttt{set\_brightness}};
+
+\node (CHOOSE_TIME) [state-big, below=of TIME] { \texttt{choose\_time} };
+\node (SET_TIME) [state, below=of CHOOSE_TIME] { \texttt{set\_time} };
+
+\DoubleArrowWE{BRIGHTNESS}{TIME}{R}{L};
+\DoubleArrowWE{TIME}{EXIT}{R}{L};
+
+\DoubleArrowNS{BRIGHTNESS}{SET_BRIGHTNESS}{SP}{SP}
+\DoubleArrowNS{TIME}{CHOOSE_TIME}{SP}{}
+\DoubleArrowNS{CHOOSE_TIME}{SET_TIME}{SP}{SP}
+
+\end{tikzpicture}

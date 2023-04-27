@@ -20,6 +20,7 @@
  align=center, inner sep=1em]
 
 \tikzstyle{state} = [base, rectangle, fill=orange!30]
+\tikzstyle{state-big} = [state, fill=orange!50]
 
 \tikzstyle{decision} = [base, rectangle, rounded corners=0.8em, fill=green!30]
 
@@ -95,5 +96,14 @@ sep=0, line width=0.5pt, font=\footnotesize]
     \node (#1) [#2, menu-small-item] {#3};
     \IncrementDecrementNode{below}{#1}
     \draw[menu-double] (#1) -- node[button-label] {SP} (_#1set.north);
+}
+
+\newcommand{\DoubleArrowWE}[4]{%
+    \draw[arrow] ([yshift=.5em]#1.east) -- node[midway, above]{#3} ([yshift=0.5em]#2.west);
+    \draw[arrow] ([yshift=-.5em]#2.west) -- node[midway, below]{#4} ([yshift=-0.5em]#1.east);
+}
+\newcommand{\DoubleArrowNS}[4]{%
+    \draw[arrow] ([xshift=.5em]#1.south) -- node[midway, right]{#3} ([xshift=0.5em]#2.north);
+    \draw[arrow] ([xshift=-.5em]#2.north) -- node[midway, left]{#4} ([xshift=-0.5em]#1.south);
 }
 
