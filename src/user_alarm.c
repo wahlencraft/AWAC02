@@ -133,7 +133,7 @@ bool user_alarm_exists(uint8_t dotw, uint8_t hour, uint8_t minute) {
             // WD should match all days 0-5, that is 0b0XX or 0b10X
             dotw_match = (~dotw & 0b100) || (~dotw & 0b010);
         } else {
-            dotw_match = alarm.dotw && dotw;
+            dotw_match = alarm.dotw == dotw;
         }
         if (dotw_match) {
             if (hour == alarm.hour && minute == alarm.minute && alarm.status) {

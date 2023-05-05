@@ -82,6 +82,7 @@ void run_tests() {
         test(user_alarm_exists(4, 7, 15));
         test(user_alarm_exists(0, 7, 15));
         test(user_alarm_exists(6, 9, 0));
+        test(!user_alarm_exists(2, 9, 0));
 
         // Add a third alarm, check alarm order
         // The alarms should be ordered WD MON-SUN
